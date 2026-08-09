@@ -1,5 +1,7 @@
 # MemoryRush Research Specification
 
+Chinese version: [RESEARCH_SPEC_CN.md](RESEARCH_SPEC_CN.md)
+
 ## Status
 
 Draft source of truth for the next planning cycle. This document supersedes the earlier product-style MVP framing. Implementation should not start until this specification and `docs/RESEARCH_PLAN.md` are reviewed.

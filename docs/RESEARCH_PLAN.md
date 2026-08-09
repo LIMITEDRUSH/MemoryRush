@@ -1,5 +1,7 @@
 # MemoryRush Research Plan
 
+Chinese version: [RESEARCH_PLAN_CN.md](RESEARCH_PLAN_CN.md)
+
 ## Overview
 
 The project should proceed as a research prototype, not a broad application. The shortest useful path is:

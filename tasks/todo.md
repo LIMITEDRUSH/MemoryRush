@@ -1,5 +1,7 @@
 # MemoryRush Research Tasks
 
+Chinese version: [todo_CN.md](todo_CN.md)
+
 ## Task 0: Research Reframing
 
 **Description:** Replace the previous product-style MVP plan with a research-oriented specification and ordered execution plan.

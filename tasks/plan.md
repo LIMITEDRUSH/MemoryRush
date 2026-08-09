@@ -1,5 +1,7 @@
 # Implementation Plan: MemoryRush Research Prototype
 
+Chinese version: [plan_CN.md](plan_CN.md)
+
 ## Overview
 
 MemoryRush should restart as a personal AI/ML research prototype. The first useful vertical slice is not a full reading app; it is an evidence-preserving pipeline that turns one article into validated, source-grounded memory units and can be evaluated against a small benchmark.
