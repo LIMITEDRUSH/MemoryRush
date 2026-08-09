@@ -1,0 +1,5 @@
+Human reading is selective. After reading a long article, people usually remember a few salient ideas rather than every paragraph.
+
+A reading memory system should therefore store high-value memory points, not only raw chunks. User highlights can provide a strong signal about which ideas feel important, surprising, useful, or worth revisiting.
+
+Dynamic recall changes the priority of memory over time. A memory that is repeatedly used should become stronger, while an unused memory can gradually decay.
