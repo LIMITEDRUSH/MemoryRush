@@ -1,8 +1,10 @@
 # Direction 01 冻结 Synthetic Benchmark Case Catalog v0.1
 
-目录状态：`FROZEN_SYNTHETIC_CANDIDATE_V0.1`
+目录状态：`FROZEN_SYNTHETIC_CANDIDATE_V0.1.1`
 
 冻结日期：`2026-08-14`
+
+v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错误的 programmatic-oracle provenance 降为 agent-authored provisional；case 文本、support annotation 与 expected decision 未改变。物化时另将会丢失 qualifier diagnostics 的 C013/C016/C018 编码为“core support + 精确缺 slot”，并把若干截断 evidence 扩为同一冻结段落内的自足 span；这些是可见输入/证书修复，不是看到结果后的标签调整。
 
 适用协议：`PILOT_PROTOCOL.md`、`ANNOTATION_GUIDE.md`、`NOVELTY_AUDIT.md`
 
@@ -11,7 +13,7 @@
 本目录包含 36 个公开安全、项目自著的 synthetic cases。所有机构、人员、试验、日期、数量和事件均为虚构；没有使用私人资料、真实用户文本或受版权保护的外部段落。它是 benchmark 设计目录，不是已经物化的 JSONL，也不是 human gold。
 
 - 自然撰写项由本次 AI/agent 写作产生，标为 `label_source=llm_generated`、`adjudication_status=provisional`；不能写成 `human` 或 `human_gold`。
-- 受控变换项在目录中给出 base、单一预注册 operator 和精确改动，标为 `label_source=programmatic_oracle`、`adjudication_status=synthetic_oracle`。这里的“oracle”只表示标签由构造规则决定，不表示真实世界真值，也不表示已经有人类复核。
+- 机械可判定的受控变换项在目录中给出 base、单一预注册 operator 和精确改动，标为 `label_source=programmatic_oracle`、`adjudication_status=synthetic_oracle`。这里的“oracle”只表示标签由构造规则决定，不表示真实世界真值，也不表示已经有人类复核。C030–C032 的 meaning-preserving sham 需要语义等价判断，虽保留 base/operator 元数据，仍标为 agent-authored `llm_generated/provisional`。
 - 本目录没有运行模型、没有生成客观性能结论。后续若物化为可运行 artifact，必须计算 source snapshot SHA-256、paragraph offsets 和 span offsets，并逐字验证 span。
 - `D` 是列出的冻结 source paragraphs；`E_pool` 是提供给所有方法的相同 evidence-span pool；`E*` 是 oracle 允许的 inclusion-minimal sufficient set。若存在多个 `E*`，全部列出。
 - expected decision 同时给出 support label：`ADMIT/fully_supported`、`REJECT/{partially_supported|contradicted|insufficient_evidence}` 或 `REVIEW/ambiguous`。
@@ -447,9 +449,9 @@
 
 ### MSG-C030 — negation block 的 meaning-preserving sham
 
-- **case_id**：`MSG-C030`；family：`F05 paired control`；tags：`programmatic_sham`, `negation_preserved`, `positive_control`。
+- **case_id**：`MSG-C030`；family：`F05 paired control`；tags：`agent_authored_sham`, `negation_preserved`, `positive_control`。
 - **base_case_id / operator**：`MSG-C010 / MEANING_PRESERVING_PARAPHRASE`；精确变换：`did not operate -> remained inactive`，保留 negative polarity 与 overnight scope。
-- **provenance**：`generator_type=programmatic`; `label_source=programmatic_oracle`; `adjudication_status=synthetic_oracle`。
+- **provenance**：`generator_type=llm_or_agent`; `label_source=llm_generated`; `adjudication_status=provisional`；语义等价不是字符串程序可证的 oracle。
 - **source paragraphs**：`P1`：“At no point during the overnight test did the rainwater pump operate.”
 - **candidate**：“The rainwater pump remained inactive throughout the overnight test.”
 - **atomic / qualifier / support-parts**：`A1=pump inactive/non-operating`；`Qnegation/equivalent_state=true`；`Qscope=overnight test`；`E1` 支持。
@@ -461,9 +463,9 @@
 
 ### MSG-C031 — entity block 的 meaning-preserving sham
 
-- **case_id**：`MSG-C031`；family：`F03 paired control`；tags：`programmatic_sham`, `entity_preserved`, `positive_control`。
+- **case_id**：`MSG-C031`；family：`F03 paired control`；tags：`agent_authored_sham`, `entity_preserved`, `positive_control`。
 - **base_case_id / operator**：`MSG-C005 / MEANING_PRESERVING_PARAPHRASE`；精确变换：主动句改为被动句，North Workshop 实体保持。
-- **provenance**：`generator_type=programmatic`; `label_source=programmatic_oracle`; `adjudication_status=synthetic_oracle`。
+- **provenance**：`generator_type=llm_or_agent`; `label_source=llm_generated`; `adjudication_status=provisional`；语义等价不是字符串程序可证的 oracle。
 - **source paragraphs**：`P1`：“The North Workshop stores the calibrated torque wrench in cabinet 4 after each inspection.”
 - **candidate**：“After every inspection, the calibrated torque wrench is placed in cabinet 4 by the North Workshop.”
 - **atomic / qualifier / support-parts**：`A1=North Workshop stores/places wrench in cabinet 4`；`Qtime=after each/every inspection`；实体未改变。
@@ -475,9 +477,9 @@
 
 ### MSG-C032 — 保留 condition 的 positive sham
 
-- **case_id**：`MSG-C032`；family：`F07 paired control`；tags：`programmatic_sham`, `condition_preserved`, `positive_control`。
+- **case_id**：`MSG-C032`；family：`F07 paired control`；tags：`agent_authored_sham`, `condition_preserved`, `positive_control`。
 - **base_case_id / operator**：`MSG-C012 / CONDITION_PRESERVING_PARAPHRASE`；精确变换：`During peak load -> When load is at its peak`，其他 qualifiers 保持。
-- **provenance**：`generator_type=programmatic`; `label_source=programmatic_oracle`; `adjudication_status=synthetic_oracle`。
+- **provenance**：`generator_type=llm_or_agent`; `label_source=llm_generated`; `adjudication_status=provisional`；语义等价不是字符串程序可证的 oracle。
 - **source paragraphs**：`P1`：“During peak load, the new scheduler may reduce queue latency by up to 15 percent.”
 - **candidate**：“When load is at its peak, the new scheduler may reduce queue latency by as much as 15 percent.”
 - **atomic / qualifier / support-parts**：`A1`；`Qcondition=peak load`；`Qmodality=may`；`Qbound=up to/as much as 15%`；全部支持。
@@ -579,8 +581,8 @@
 | cross-span | C003, C004, C025, C029, C033–C036（8 个） |
 | redundant evidence | C022, C023, C025, C036（至少 4 个；C025 的旧 notice 对 final claim 冗余） |
 | contradiction/ambiguity | C024, C026, C027（3 个 REVIEW）；C025 是 resolved-conflict control |
-| natural authored controls | 22 个 `NATURAL_AUTHORED` 项 |
-| programmatic transforms | 14 个显式 operator 项 |
+| agent-authored/provisional | 25 个：22 个 `NATURAL_AUTHORED` + C030–C032 semantic shams |
+| programmatic synthetic oracles | 11 个机械可判定的显式 operator 项 |
 
 ### 4.3 Expected decision 分布
 
