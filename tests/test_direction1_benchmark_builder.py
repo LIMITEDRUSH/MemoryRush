@@ -110,6 +110,39 @@ def test_direction1_builder_materializes_frozen_catalog(tmp_path: Path) -> None:
     assert by_id["MSG-C020"].oracle.support_cells[0].label.value == "insufficient"
 
 
+def test_hashed_research_artifacts_have_checkout_stable_lf_attributes() -> None:
+    repository_root = Path(__file__).resolve().parents[1]
+    attributes_path = repository_root / ".gitattributes"
+
+    assert attributes_path.read_text(encoding="utf-8").splitlines() == [
+        "* text=auto eol=lf"
+    ]
+    completed = subprocess.run(
+        [
+            "git",
+            "check-attr",
+            "text",
+            "eol",
+            "--",
+            "data/benchmarks/direction1_synthetic_v0_1.jsonl",
+            "memoryrush/admission/prompts/claim_form_v0_1.md",
+            "research/direction_01_minimal_sufficient_grounding/SEMANTIC_PILOT_PROTOCOL.md",
+        ],
+        cwd=repository_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    for path in (
+        "data/benchmarks/direction1_synthetic_v0_1.jsonl",
+        "memoryrush/admission/prompts/claim_form_v0_1.md",
+        "research/direction_01_minimal_sufficient_grounding/SEMANTIC_PILOT_PROTOCOL.md",
+    ):
+        assert f"{path}: text: auto" in completed.stdout
+        assert f"{path}: eol: lf" in completed.stdout
+
+
 def _write_payloads(path: Path, payloads: list[dict]) -> None:
     path.write_text(
         "\n".join(
