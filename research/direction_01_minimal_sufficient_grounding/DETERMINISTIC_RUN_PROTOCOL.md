@@ -22,7 +22,7 @@ No statistical significance, generalization, human agreement or proposed-method 
 
 All methods receive the same candidate and evidence spans in the same case universe.
 
-1. `current_id_only_v0`: structural false-positive baseline. It admits every loader-valid case with score `1.0`. This represents ID existence, not semantic validation.
+1. `id_only_support_proxy_v0`: structural false-positive proxy. It admits every loader-valid CandidateClaim case with score `1.0`. It isolates the support blind spot but is not a case-by-case replay of the full production `ArticleMemoryOutput` validator, which also applies unrelated shape, non-empty, ID and CoreIdea-quote checks.
 2. `exact_copy_v0`: deterministic Unicode-casefold/whitespace-normalized literal atomic-claim containment. It uses the provisional inclusion-minimal solver and conservative three-way policy. Its fixed claim-form audit is explicitly named `baseline_assumes_candidate_form`; it is not oracle-derived.
 3. `static_oracle_upper_bound_v0`: uses the frozen support cells and claim-form annotation. It must exactly reproduce every oracle decision or the run is invalid. It is a plumbing upper bound, not deployable and not evidence for the proposed method.
 
@@ -80,7 +80,7 @@ Raw failures are retained and classified `INVALID_RUN` when validation cannot co
 
 ## 8. Expected Falsification Value
 
-- ID-only is expected to expose false admission because it has no semantic check. Its exact rate is not prespecified.
+- The ID-only support proxy is expected to expose false admission because it has no semantic check. Its exact rate is not prespecified and must not be reported as the full production validator's benchmark rate.
 - Exact-copy may reduce false admission while causing missed admissions on paraphrases/cross-span claims; either outcome is descriptive.
 - Static oracle must reproduce 36/36 decisions; failure falsifies plumbing integrity.
 - These results do not establish that deletion, perturbation or joint admission adds value over a strong semantic verifier.
