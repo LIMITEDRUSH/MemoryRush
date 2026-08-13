@@ -2,18 +2,40 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass, field
+from numbers import Real
 from typing import Any
 
 
 def _require_text(value: str, field_name: str) -> None:
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string")
     if not value.strip():
         raise ValueError(f"{field_name} must not be empty")
 
 
 def _require_score(value: float, field_name: str) -> None:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise TypeError(f"{field_name} must be a number")
+    if not math.isfinite(value):
+        raise ValueError(f"{field_name} must be finite")
     if value < 0.0 or value > 1.0:
         raise ValueError(f"{field_name} must be between 0.0 and 1.0")
+
+
+def _require_string_list(value: list[str], field_name: str) -> None:
+    if not isinstance(value, list):
+        raise TypeError(f"{field_name} must be a list of strings")
+    if any(not isinstance(item, str) for item in value):
+        raise TypeError(f"{field_name} must contain only strings")
+
+
+def _require_non_negative_integer(value: int, field_name: str) -> None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TypeError(f"{field_name} must be an integer")
+    if value < 0:
+        raise ValueError(f"{field_name} must be non-negative")
 
 
 @dataclass
@@ -54,7 +76,10 @@ class MemoryUnit:
     confidence: float = 0.0
 
     def __post_init__(self) -> None:
+        _require_text(self.content, "content")
         _require_text(self.memory_type, "memory_type")
+        _require_string_list(self.evidence_paragraph_ids, "evidence_paragraph_ids")
+        _require_string_list(self.tags, "tags")
         _require_score(self.confidence, "confidence")
 
     def to_dict(self) -> dict[str, Any]:
@@ -70,8 +95,7 @@ class RecallQuestion:
     def __post_init__(self) -> None:
         _require_text(self.question, "question")
         _require_text(self.expected_answer, "expected_answer")
-        if self.memory_unit_index < 0:
-            raise ValueError("memory_unit_index must be non-negative")
+        _require_non_negative_integer(self.memory_unit_index, "memory_unit_index")
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -138,36 +162,34 @@ class ProcessingArtifact:
 
 def article_memory_output_from_dict(data: dict[str, Any]) -> ArticleMemoryOutput:
     return ArticleMemoryOutput(
-        summary=str(data["summary"]),
+        summary=data["summary"],
         core_ideas=[
             CoreIdea(
-                idea=str(item["idea"]),
-                why_it_matters=str(item["why_it_matters"]),
+                idea=item["idea"],
+                why_it_matters=item["why_it_matters"],
                 evidence=EvidenceSpan(
-                    paragraph_id=str(item["evidence"]["paragraph_id"]),
-                    quote=str(item["evidence"]["quote"]),
+                    paragraph_id=item["evidence"]["paragraph_id"],
+                    quote=item["evidence"]["quote"],
                 ),
-                salience_score=float(item["salience_score"]),
+                salience_score=item["salience_score"],
             )
             for item in data.get("core_ideas", [])
         ],
         memory_units=[
             MemoryUnit(
-                content=str(item["content"]),
-                memory_type=str(item["memory_type"]),
-                evidence_paragraph_ids=[
-                    str(paragraph_id) for paragraph_id in item.get("evidence_paragraph_ids", [])
-                ],
-                tags=[str(tag) for tag in item.get("tags", [])],
-                confidence=float(item["confidence"]),
+                content=item["content"],
+                memory_type=item["memory_type"],
+                evidence_paragraph_ids=item.get("evidence_paragraph_ids", []),
+                tags=item.get("tags", []),
+                confidence=item["confidence"],
             )
             for item in data.get("memory_units", [])
         ],
         recall_questions=[
             RecallQuestion(
-                question=str(item["question"]),
-                expected_answer=str(item["expected_answer"]),
-                memory_unit_index=int(item["memory_unit_index"]),
+                question=item["question"],
+                expected_answer=item["expected_answer"],
+                memory_unit_index=item["memory_unit_index"],
             )
             for item in data.get("recall_questions", [])
         ],

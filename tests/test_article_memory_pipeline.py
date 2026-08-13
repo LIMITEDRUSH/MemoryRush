@@ -1,3 +1,5 @@
+import pytest
+
 from memoryrush.domain import SourceDocument, SourceParagraph
 from memoryrush.pipeline import (
     ArticleMemoryOutput,
@@ -77,3 +79,14 @@ def test_fake_provider_pipeline_returns_valid_artifact() -> None:
     assert artifact.model_name == "fake-model"
     assert artifact.validation_report.is_valid
     assert artifact.output.memory_units[0].evidence_paragraph_ids == ["p_001"]
+
+
+@pytest.mark.parametrize(
+    "prompt_version",
+    ["../secrets", "..\\secrets", "nested/prompt", "article_memory_v1.md", ""],
+)
+def test_prompt_loader_rejects_unsafe_prompt_versions(prompt_version: str) -> None:
+    from memoryrush.pipeline.article_memory_pipeline import load_prompt_template
+
+    with pytest.raises(ValueError, match="prompt_version"):
+        load_prompt_template(prompt_version)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Protocol
 
@@ -32,6 +33,12 @@ def build_prompt_context(document: SourceDocument, prompt_template: str | None =
 
 
 def load_prompt_template(prompt_version: str) -> str:
+    if not isinstance(prompt_version, str):
+        raise ValueError("prompt_version must be a string")
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", prompt_version) is None:
+        raise ValueError(
+            "prompt_version must contain only letters, numbers, underscores, or hyphens"
+        )
     prompt_path = Path(__file__).resolve().parents[1] / "prompts" / f"{prompt_version}.md"
     return prompt_path.read_text(encoding="utf-8")
 

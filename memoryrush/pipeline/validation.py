@@ -14,6 +14,23 @@ def validate_article_memory_output(
     issues: list[ValidationIssue] = []
     seen_memory_content: set[str] = set()
 
+    if not output.core_ideas:
+        issues.append(
+            ValidationIssue(
+                code="missing_core_ideas",
+                message="Output must contain at least one evidence-linked core idea.",
+                location="core_ideas",
+            )
+        )
+    if not output.memory_units:
+        issues.append(
+            ValidationIssue(
+                code="missing_memory_units",
+                message="Output must contain at least one evidence-linked memory unit.",
+                location="memory_units",
+            )
+        )
+
     for index, core_idea in enumerate(output.core_ideas):
         location = f"core_ideas[{index}].evidence"
         _validate_paragraph_id(
