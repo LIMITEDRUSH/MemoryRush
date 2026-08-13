@@ -5,7 +5,7 @@ project:
   completion_status: INCOMPLETE
   started_at: "2026-08-14T02:43:37+08:00"
   minimum_work_until: "2026-08-14T12:43:37+08:00"
-  current_phase: "phase_1_novelty_audit_plus_phase_2_3_benchmark_framework"
+  current_phase: "phase_3_4_evaluator_and_benchmark_materialization"
   locked_core_path: "DIRECTION_CHARTER.md"
 
 git:
@@ -30,7 +30,12 @@ completed:
   - "Implemented provisional contracts, bounded solvers, deletion audit, controlled perturbations and three-way decision plumbing"
   - "Fixed slot-level qualifier coverage, compositional PARTIAL support, candidate-pool conflict handling and solver boundary validation"
   - "Made benchmark loader fail closed on unknown fields, provenance-status mismatches and ambiguous frozen-snapshot paragraph locations"
-  - "Verified current full suite: 62 tests passed"
+  - "Hardened production provider-output contracts without claiming semantic support validation"
+  - "Added deterministic ID-only, exact-copy and static-oracle verifier adapters"
+  - "Bound benchmark oracle decisions and minimal evidence sets to runtime certificate recomputation"
+  - "Unified claim-form decision semantics across runtime evaluation and benchmark loading"
+  - "Froze a 36-case synthetic design catalog with explicit provisional/programmatic provenance and leakage controls"
+  - "Verified stable framework checkpoint: 114 tests passed"
 
 hypotheses:
   - id: H1
@@ -91,6 +96,9 @@ failures:
   - id: audit_novelty_001
     status: open_scientific_risk
     summary: "Closest work covers every individual component and generic write-time support gating; only a narrow joint-certificate interaction claim remains untested."
+  - id: audit_claim_form_certificate_001
+    status: resolved
+    summary: "Benchmark certificate REVIEW override initially disagreed with runtime semantics for evidence REJECT; a RED regression led to one shared claim-form policy."
 
 blocked_decisions:
   - "Formal atomic/qualifier schema"
@@ -99,8 +107,9 @@ blocked_decisions:
   - "Formal REVIEW policy, benchmark, model family, annotation plan, metric and threshold"
 
 next_steps:
-  - "Freeze synthetic oracle fixtures and hashes before any confirmatory evaluation"
-  - "Implement ID-only, exact-quote, fake-oracle and deterministic semantic baselines plus evaluation runner"
+  - "Materialize the frozen catalog as strict JSONL with immutable hashes and certificate validation"
+  - "Finish provisional risk-coverage evaluator with same-universe matched-admission checks"
+  - "Implement a traceable local semantic-verifier adapter and holistic comparison"
   - "Add risk-coverage, matched-coverage and frozen downstream propagation metrics"
   - "Run deterministic end-to-end benchmark, deletion and perturbation ablations"
   - "Complete production-validator hardening and final code audit without confusing structural validity with semantic support"
@@ -112,8 +121,9 @@ workspace:
   experiment_log: "EXPERIMENT_LOG.jsonl"
 
 checkpoint:
-  updated_at: "2026-08-14T03:22:24+08:00"
-  head: "d042dbb"
-  pushed_through: "08d9387"
-  full_tests: "62 passed in 0.54s"
+  updated_at: "2026-08-14T03:57:11+08:00"
+  head: "eb01afb"
+  pushed_through: "eb01afb"
+  full_tests: "114 passed in 1.94s"
+  local_in_progress: "evaluation.py/tests and benchmark JSONL builder are parallel TDD work, not yet counted as verified"
   novelty_status: "MIXED_NOT_YET_DEMONSTRATED"

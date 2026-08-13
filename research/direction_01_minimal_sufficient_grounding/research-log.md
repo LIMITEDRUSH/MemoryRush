@@ -26,6 +26,11 @@ Append-only timeline. Commands and claims are recorded with validation state; ti
 | 20 | 2026-08-14 03:20 | tdd | Added a forged-solver negative control. Orchestration now recomputes sufficiency and rejects inconsistent solver results. Full regression reached 62 passed. |
 | 21 | 2026-08-14 03:21 | commits | Committed semantic invariants as `f816259` and fail-closed benchmark provenance as `d042dbb`. Both are local at this checkpoint; remote is intentionally reported separately. |
 | 22 | 2026-08-14 03:22 | outer-loop | Independent literature audit deduplicated 41 candidates and deeply checked 20 closest works. It rejects all broad novelty formulations; only a narrow joint, counterfactual write-certificate interaction remains `MIXED / NOT YET DEMONSTRATED`. |
+| 23 | 2026-08-14 03:22–03:41 | implementation | Added claim-form audits, truthful benchmark support-oracle records, deterministic ID-only/exact-copy/static-oracle verifier adapters, and production provider-output hardening. Production still has no semantic entailment admission; static oracle is only a plumbing upper bound. |
+| 24 | 2026-08-14 03:42–03:51 | adversarial TDD | Runtime enum/policy outputs, benchmark minimal-set certificates, base provenance cycles and pool-conflict decisions were made fail closed. Focused tests reached 49 passed and full stable regression 113 passed before the next audit. |
+| 25 | 2026-08-14 03:52 | failure | Independent review found benchmark form-REVIEW handling could upgrade an evidence REJECT, diverging from runtime. A RED counterexample failed 1/33; one shared claim-form override made focused 45 and full 114 pass. |
+| 26 | 2026-08-14 03:53–03:57 | benchmark | Froze a 36-case public-safe design catalog: 20/13/3 ADMIT/REJECT/REVIEW, 22 agent-provisional and 14 programmatic-oracle cases. It records pairs, leakage risks and three semantic review risks; it is not yet materialized JSONL or human gold. |
+| 27 | 2026-08-14 03:57 | checkpoint | Pushed stable HEAD `eb01afb`; evaluator and benchmark materializer are parallel uncommitted TDD and are explicitly excluded from this checkpoint. |
 
 ## Command ledger
 
@@ -46,3 +51,6 @@ Append-only timeline. Commands and claims are recorded with validation state; ti
 | Benchmark integrity tests after fail-closed fixes | TDD GREEN | 0 | 20 passed in 0.08s |
 | `venv/research/Scripts/python.exe -B -m pytest -q -p no:cacheprovider` at `d042dbb` | Full regression | 0 | 62 passed in 0.54s |
 | JSON parse of `annotation-schema.json` | Schema syntax | 0 | `schema-json-ok` |
+| Focused runtime/certificate tests at `507c2e1` | TDD GREEN | 0 | 49 passed in 0.21s |
+| Full pytest after claim-form policy unification | Regression | 0 | 114 passed in 1.94s |
+| Catalog count/provenance/diff audit | Design freeze validation | 0 | 36 cases; 20/13/3; 22 provisional + 14 programmatic; diff checks passed |

@@ -13,10 +13,13 @@
 ## Key Results
 
 - `run-debug-001`：现有 ID-only MemoryUnit validation 接受 modality strengthening；见 `CURRENT_RESULTS.md` 与回归测试。
-- 环境基线：合规 Python 3.13.14 环境下，变更前 `15 passed`；当前 framework checkpoint `62 passed`。
+- 环境基线：合规 Python 3.13.14 环境下，变更前 `15 passed`；稳定 framework checkpoint `114 passed`。
 - provenance loader 已对重复段落坐标、未知字段和标签来源/裁决状态组合 fail closed；这是数据完整性修复，不是方法结果。
 - qualifier coverage 已从类型级改为具体 slot 级；两个同类型实体不再被一个 `ENTITY` 标记错误覆盖。
 - 两个 `PARTIAL` span 可通过显式 required support parts 联合支持一个不可误拆的跨句命题；这只是 provisional representation。
+- 36-case catalog 已冻结为设计协议：22 个 agent-authored/provisional、14 个 programmatic synthetic-oracle；它尚不是物化 JSONL，更不是 human gold。
+- benchmark oracle 现在必须与 support matrix 重算出的全部 inclusion-minimal sets 和同一三路 policy 一致；证书 integrity 是工程结果，不是效果结果。
+- ID-only、exact-copy 与 static-oracle adapters 已实现。后者只作 plumbing upper bound；前两者均不是 strong semantic verifier。
 
 ## Patterns and Insights
 
@@ -25,6 +28,7 @@
 - exact quote 只证明字符串来自原文，不能自动证明候选命题的组合语义、作用域和模态忠实。
 - 当前回归例说明 paragraph-ID validity 与 semantic support 是两个不同 estimand；后续 baseline 报告不得混称。
 - 可替换 solver 的输出不能被 orchestration 盲信；当前边界会对选中 evidence 重新计算 sufficiency，避免伪造/bug result 污染 admission record。
+- benchmark loader 与 runtime 必须调用同一个 claim-form decision override；独立两份逻辑曾令 evidence REJECT + form REVIEW 被错误抬升，现已用回归反例消除。
 - 文献中的最接近威胁是 ConsistencyGate、A-MAC、GAVEL、MEG、TriQua、Molecular Facts/Claimify 与 Evidence Sufficiency；后续实验必须以 interaction ablation 证明不是组件堆叠。
 
 ## Lessons and Constraints
