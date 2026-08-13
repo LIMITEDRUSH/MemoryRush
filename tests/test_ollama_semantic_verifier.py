@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -10,6 +11,7 @@ from memoryrush.admission.models import (
     QualifierSlot,
     SupportLabel,
 )
+from memoryrush.admission.benchmark import load_benchmark
 from memoryrush.admission.ollama_verifier import (
     OllamaSemanticVerifier,
     OllamaVerifierConfig,
@@ -158,7 +160,7 @@ def test_semantic_verifier_rejects_unknown_fields_and_type_coercion() -> None:
 def test_semantic_verifier_rejects_invented_qualifier_and_part_coverage() -> None:
     invented_qualifier = _valid_response()
     invented_qualifier["cells"][0]["supported_qualifiers"][0]["value"] = "must"
-    with pytest.raises(ValueError, match="declared qualifiers"):
+    with pytest.raises(ValueError, match="undeclared qualifier"):
         OllamaSemanticVerifier(
             OllamaVerifierConfig(model_name="qwen3:8b"),
             transport=RecordingTransport(_envelope(invented_qualifier)),
@@ -166,7 +168,7 @@ def test_semantic_verifier_rejects_invented_qualifier_and_part_coverage() -> Non
 
     invented_part = _valid_response()
     invented_part["cells"][0]["supported_claim_parts"] = ["causal_link"]
-    with pytest.raises(ValueError, match="declared support parts"):
+    with pytest.raises(ValueError, match="undeclared claim parts"):
         OllamaSemanticVerifier(
             OllamaVerifierConfig(model_name="qwen3:8b"),
             transport=RecordingTransport(_envelope(invented_part)),
@@ -216,26 +218,33 @@ def test_semantic_verifier_rejects_wrong_or_incomplete_envelope_fields(
 
 
 @pytest.mark.parametrize("label", ["insufficient", "contradicts", "ambiguous"])
-def test_non_support_labels_cannot_claim_qualifier_or_part_coverage(label: str) -> None:
+def test_core_label_and_supported_qualifier_coverage_are_orthogonal(label: str) -> None:
     response = _valid_response()
     response["cells"][0]["label"] = label
 
-    with pytest.raises(ValueError, match="cannot declare supported"):
-        OllamaSemanticVerifier(
-            OllamaVerifierConfig(model_name="qwen3:8b"),
-            transport=RecordingTransport(_envelope(response)),
-        ).build_support_matrix(_candidate(), (_span(),))
+    matrix = OllamaSemanticVerifier(
+        OllamaVerifierConfig(model_name="qwen3:8b"),
+        transport=RecordingTransport(_envelope(response)),
+    ).build_support_matrix(_candidate(), (_span(),))
+
+    cell = matrix.cell("claim-001", "span-001")
+    assert cell.label.value == label
+    assert cell.supported_qualifiers == _candidate().atomic_claims[0].qualifiers
 
 
-def test_support_label_requires_complete_core_and_qualifier_coverage() -> None:
+def test_support_label_can_expose_exact_missing_qualifier_slot() -> None:
     response = _valid_response()
     response["cells"][0]["supported_qualifiers"].pop()
 
-    with pytest.raises(ValueError, match="SUPPORTS cell must cover all declared qualifiers"):
-        OllamaSemanticVerifier(
-            OllamaVerifierConfig(model_name="qwen3:8b"),
-            transport=RecordingTransport(_envelope(response)),
-        ).build_support_matrix(_candidate(), (_span(),))
+    matrix = OllamaSemanticVerifier(
+        OllamaVerifierConfig(model_name="qwen3:8b"),
+        transport=RecordingTransport(_envelope(response)),
+    ).build_support_matrix(_candidate(), (_span(),))
+
+    assert matrix.cell("claim-001", "span-001").label is SupportLabel.SUPPORTS
+    assert matrix.cell("claim-001", "span-001").supported_qualifiers == (
+        QualifierSlot(QualifierKind.MODALITY, "may"),
+    )
 
 
 def test_prompt_treats_source_as_untrusted_data_and_caps_input_size() -> None:
@@ -293,3 +302,35 @@ def test_prompt_version_is_loaded_from_a_versioned_file() -> None:
     assert verifier.last_run is not None
     assert verifier.last_run.prompt_version == "semantic_support_v0_1"
     assert len(verifier.last_run.prompt_sha256) == 64
+
+
+@pytest.mark.parametrize("case_id", ["MSG-C008", "MSG-C013", "MSG-C016", "MSG-C018"])
+def test_parser_can_represent_frozen_core_label_and_qualifier_gold(case_id: str) -> None:
+    cases = load_benchmark(
+        Path("data/benchmarks/direction1_synthetic_v0_1.jsonl")
+    )
+    case = next(item for item in cases if item.case_id == case_id)
+    response = {
+        "cells": [
+            {
+                "claim_id": cell.claim_id,
+                "span_id": cell.span_id,
+                "label": cell.label.value,
+                "supported_qualifiers": [
+                    {"kind": slot.kind.value, "value": slot.value}
+                    for slot in cell.supported_qualifiers
+                ],
+                "supported_claim_parts": list(cell.supported_claim_parts),
+                "rationale": cell.rationale,
+            }
+            for cell in case.oracle.support_cells
+        ]
+    }
+    verifier = OllamaSemanticVerifier(
+        OllamaVerifierConfig(model_name="qwen3:8b"),
+        transport=RecordingTransport(_envelope(response)),
+    )
+
+    matrix = verifier.build_support_matrix(case.candidate, case.evidence_spans)
+
+    assert matrix.cells == case.oracle.support_cells

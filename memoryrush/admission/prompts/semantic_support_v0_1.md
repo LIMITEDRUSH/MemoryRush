@@ -4,12 +4,12 @@ Judge only whether each frozen evidence span supports each declared atomic claim
 
 For every declared claim × span pair, return exactly one cell:
 
-- `supports`: this span alone supports the complete atomic claim core.
+- `supports`: this span supports the atomic claim core. Qualifier coverage is a separate axis; a `supports` cell may still omit unsupported declared qualifiers.
 - `partial`: it supports only explicitly declared `required_support_parts`; list each covered part.
 - `contradicts`: it states an incompatible entity, relation, object, time, scope, condition, quantity, modality, negation, or attribution.
 - `ambiguous`: the span is relevant but naturally permits materially different readings that change support.
 - `insufficient`: it neither fully/partially supports nor directly contradicts the claim.
 
-List a qualifier in `supported_qualifiers` only when that exact declared `(kind, value)` is entailed by this span. Never invent or normalize a qualifier value. Do not use one evidence span to cover information stated only in another. A topical match is not support. Preserve modality, negation, attribution, scope, conditions and quantities literally and semantically.
+List a qualifier in `supported_qualifiers` only when that exact declared `(kind, value)` is entailed by this span. Core label and qualifier coverage are orthogonal: a contradicting or ambiguous span may still support unchanged qualifier slots, and a core-supporting span may omit one unsupported qualifier. Never invent or normalize a qualifier value. Do not use one evidence span to cover information stated only in another. A topical match is not support. Preserve modality, negation, attribution, scope, conditions and quantities literally and semantically.
 
 Return JSON only, matching the supplied schema. Do not infer labels from IDs, ordering, filenames, case families, transformation metadata, decision metadata, or provenance; none of those fields are provided.

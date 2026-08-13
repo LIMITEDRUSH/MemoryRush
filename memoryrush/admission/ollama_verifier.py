@@ -366,17 +366,6 @@ def _parse_cell(raw: Any, claims: dict[str, Any]) -> SupportCell:
     rationale = _require_text(raw["rationale"], "rationale")
     claim = claims[claim_id]
 
-    if label in {
-        SupportLabel.INSUFFICIENT,
-        SupportLabel.CONTRADICTS,
-        SupportLabel.AMBIGUOUS,
-    } and (qualifiers or parts):
-        raise ValueError(f"{label.value} cell cannot declare supported qualifiers or parts")
-    if label is SupportLabel.SUPPORTS:
-        if set(qualifiers) != set(claim.qualifiers):
-            raise ValueError("SUPPORTS cell must cover all declared qualifiers")
-        if set(parts) != set(claim.required_support_parts):
-            raise ValueError("SUPPORTS cell must cover all declared support parts")
     if label is SupportLabel.PARTIAL and not parts:
         raise ValueError("PARTIAL cell must cover at least one declared support part")
 
