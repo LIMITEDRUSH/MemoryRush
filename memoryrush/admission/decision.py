@@ -8,6 +8,8 @@ from typing import Protocol
 from memoryrush.admission.models import (
     AdmissionDecision,
     CandidateClaim,
+    ClaimFormAudit,
+    ClaimFormStatus,
     EvidenceSpan,
     SupportLabel,
     SupportMatrix,
@@ -46,6 +48,7 @@ class AdmissionResult:
     sufficiency: SufficiencyResult
     deletion_audit: DeletionAudit | None
     perturbation_audits: tuple[PerturbationAudit, ...] = ()
+    claim_form_audit: ClaimFormAudit | None = None
 
 
 class DecisionPolicy(Protocol):
@@ -113,6 +116,7 @@ def evaluate_admission(
     solver: EvidenceSetSolver,
     policy: DecisionPolicy,
     perturbations: tuple[tuple[CandidatePerturbation, AdmissionDecision], ...] = (),
+    claim_form_audit: ClaimFormAudit | None = None,
 ) -> AdmissionResult:
     """Run one auditable admission decision using replaceable components."""
 
@@ -150,6 +154,7 @@ def evaluate_admission(
             verifier=verifier,
             solver=solver,
             policy=policy,
+            claim_form_audit=claim_form_audit,
         )
         passed = perturbed_result.decision is expected_decision
         perturbation_audits.append(
@@ -169,6 +174,27 @@ def evaluate_admission(
         decision = AdmissionDecision.REVIEW
         reason_codes = (*reason_codes, "perturbation_not_detected")
 
+    if claim_form_audit is None:
+        if decision is AdmissionDecision.ADMIT:
+            decision = AdmissionDecision.REVIEW
+        reason_codes = (*reason_codes, "claim_form_not_audited")
+    else:
+        if claim_form_audit.self_sufficiency is ClaimFormStatus.FAIL:
+            decision = AdmissionDecision.REJECT
+            reason_codes = (*reason_codes, "claim_not_self_sufficient")
+        elif claim_form_audit.self_sufficiency is ClaimFormStatus.REVIEW:
+            if decision is AdmissionDecision.ADMIT:
+                decision = AdmissionDecision.REVIEW
+            reason_codes = (*reason_codes, "claim_self_sufficiency_unresolved")
+
+        if claim_form_audit.minimality is ClaimFormStatus.FAIL:
+            decision = AdmissionDecision.REJECT
+            reason_codes = (*reason_codes, "claim_not_minimal")
+        elif claim_form_audit.minimality is ClaimFormStatus.REVIEW:
+            if decision is AdmissionDecision.ADMIT:
+                decision = AdmissionDecision.REVIEW
+            reason_codes = (*reason_codes, "claim_minimality_unresolved")
+
     return AdmissionResult(
         candidate_id=candidate.candidate_id,
         decision=decision,
@@ -180,4 +206,5 @@ def evaluate_admission(
         sufficiency=sufficiency,
         deletion_audit=deletion_audit,
         perturbation_audits=tuple(perturbation_audits),
+        claim_form_audit=claim_form_audit,
     )

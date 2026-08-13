@@ -25,6 +25,12 @@ class AdmissionDecision(str, Enum):
     REJECT = "REJECT"
 
 
+class ClaimFormStatus(str, Enum):
+    PASS = "PASS"
+    REVIEW = "REVIEW"
+    FAIL = "FAIL"
+
+
 class QualifierKind(str, Enum):
     ENTITY = "entity"
     RELATION = "relation"
@@ -44,6 +50,23 @@ class SupportLabel(str, Enum):
     CONTRADICTS = "contradicts"
     AMBIGUOUS = "ambiguous"
     INSUFFICIENT = "insufficient"
+
+
+@dataclass(frozen=True)
+class ClaimFormAudit:
+    """Provisional independent audit of the candidate's proposition-side form."""
+
+    self_sufficiency: ClaimFormStatus
+    minimality: ClaimFormStatus
+    reason_codes: tuple[str, ...]
+    auditor_name: str
+    auditor_version: str
+
+    def __post_init__(self) -> None:
+        _require_text(self.auditor_name, "claim-form auditor name")
+        _require_text(self.auditor_version, "claim-form auditor version")
+        if any(not reason.strip() for reason in self.reason_codes):
+            raise ValueError("claim-form reason codes must not be empty")
 
 
 @dataclass(frozen=True)

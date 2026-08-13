@@ -6,6 +6,8 @@ from memoryrush.admission import (
     AdmissionDecision,
     AtomicClaim,
     CandidateClaim,
+    ClaimFormAudit,
+    ClaimFormStatus,
     ConservativeDecisionPolicy,
     EvidenceSpan,
     InclusionMinimalSolver,
@@ -47,6 +49,16 @@ def _span() -> EvidenceSpan:
     )
 
 
+def _passing_claim_form_audit() -> ClaimFormAudit:
+    return ClaimFormAudit(
+        self_sufficiency=ClaimFormStatus.PASS,
+        minimality=ClaimFormStatus.PASS,
+        reason_codes=("fixture_pass",),
+        auditor_name="fixture",
+        auditor_version="test-v1",
+    )
+
+
 @dataclass
 class MatrixVerifier:
     label: SupportLabel
@@ -79,6 +91,7 @@ def test_admission_result_is_structured_and_auditable() -> None:
         ),
         solver=InclusionMinimalSolver(),
         policy=ConservativeDecisionPolicy(),
+        claim_form_audit=_passing_claim_form_audit(),
     )
 
     assert result.decision is AdmissionDecision.ADMIT
@@ -219,6 +232,7 @@ def test_undetected_semantic_perturbation_downgrades_admit_to_review() -> None:
         InclusionMinimalSolver(),
         ConservativeDecisionPolicy(),
         perturbations=((perturbation, AdmissionDecision.REJECT),),
+        claim_form_audit=_passing_claim_form_audit(),
     )
 
     assert result.decision is AdmissionDecision.REVIEW
@@ -265,6 +279,7 @@ def test_detected_semantic_perturbation_preserves_original_admit() -> None:
         InclusionMinimalSolver(),
         ConservativeDecisionPolicy(),
         perturbations=((perturbation, AdmissionDecision.REJECT),),
+        claim_form_audit=_passing_claim_form_audit(),
     )
 
     assert result.decision is AdmissionDecision.ADMIT
@@ -299,3 +314,66 @@ def test_admission_rejects_a_solver_result_with_forged_sufficiency() -> None:
             ForgedSolver(),
             ConservativeDecisionPolicy(),
         )
+
+
+def test_claim_form_failure_prevents_evidence_supported_admission() -> None:
+    result = evaluate_admission(
+        candidate=_candidate(),
+        evidence_spans=(_span(),),
+        verifier=MatrixVerifier(
+            SupportLabel.SUPPORTS,
+            supported_qualifiers=(QualifierSlot(QualifierKind.MODALITY, "may"),),
+        ),
+        solver=InclusionMinimalSolver(),
+        policy=ConservativeDecisionPolicy(),
+        claim_form_audit=ClaimFormAudit(
+            self_sufficiency=ClaimFormStatus.FAIL,
+            minimality=ClaimFormStatus.PASS,
+            reason_codes=("context_dependent_fragment",),
+            auditor_name="fixture",
+            auditor_version="test-v1",
+        ),
+    )
+
+    assert result.decision is AdmissionDecision.REJECT
+    assert "claim_not_self_sufficient" in result.reason_codes
+    assert result.claim_form_audit is not None
+
+
+def test_unresolved_claim_minimality_routes_to_review() -> None:
+    result = evaluate_admission(
+        candidate=_candidate(),
+        evidence_spans=(_span(),),
+        verifier=MatrixVerifier(
+            SupportLabel.SUPPORTS,
+            supported_qualifiers=(QualifierSlot(QualifierKind.MODALITY, "may"),),
+        ),
+        solver=InclusionMinimalSolver(),
+        policy=ConservativeDecisionPolicy(),
+        claim_form_audit=ClaimFormAudit(
+            self_sufficiency=ClaimFormStatus.PASS,
+            minimality=ClaimFormStatus.REVIEW,
+            reason_codes=("decomposition_disagreement",),
+            auditor_name="fixture",
+            auditor_version="test-v1",
+        ),
+    )
+
+    assert result.decision is AdmissionDecision.REVIEW
+    assert "claim_minimality_unresolved" in result.reason_codes
+
+
+def test_missing_claim_form_audit_is_explicitly_reviewed() -> None:
+    result = evaluate_admission(
+        candidate=_candidate(),
+        evidence_spans=(_span(),),
+        verifier=MatrixVerifier(
+            SupportLabel.SUPPORTS,
+            supported_qualifiers=(QualifierSlot(QualifierKind.MODALITY, "may"),),
+        ),
+        solver=InclusionMinimalSolver(),
+        policy=ConservativeDecisionPolicy(),
+    )
+
+    assert result.decision is AdmissionDecision.REVIEW
+    assert "claim_form_not_audited" in result.reason_codes
