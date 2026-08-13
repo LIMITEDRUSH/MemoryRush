@@ -33,6 +33,7 @@ from memoryrush.admission.solver import (
     audit_evidence_deletions,
     evaluate_sufficiency,
 )
+from memoryrush.admission.verifiers import ExactCopyVerifier, IdOnlyVerifier, StaticOracleVerifier
 
 __all__ = [
     "AdmissionDecision",
@@ -50,6 +51,8 @@ __all__ = [
     "EvidenceSetSolver",
     "EvidenceSolution",
     "InclusionMinimalSolver",
+    "ExactCopyVerifier",
+    "IdOnlyVerifier",
     "MinimumCardinalitySolver",
     "PerturbationAudit",
     "QualifierKind",
@@ -57,6 +60,7 @@ __all__ = [
     "SupportCell",
     "SupportLabel",
     "SupportMatrix",
+    "StaticOracleVerifier",
     "SufficiencyResult",
     "Verifier",
     "audit_evidence_deletions",
