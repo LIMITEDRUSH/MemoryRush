@@ -1,6 +1,6 @@
 # Current Results
 
-Updated: `2026-08-14T03:22:24+08:00`
+Updated: `2026-08-14T04:25:00+08:00`
 Overall evidence status: `MIXED`
 
 ## Verified This Run
@@ -31,14 +31,20 @@ The candidate references the real paragraph ID. `validate_article_memory_output`
 
 Classification: `DEBUGGING`, not confirmatory. The exact fixture was written after protocol lock and is not evidence that the proposed method works.
 
-### Provisional research framework
+### Provisional research framework and frozen microbenchmark
 
 The current TDD slices add verifier/solver-agnostic contracts, slot-specific qualifier coverage, localized evidence spans, total support matrices, bounded inclusion-minimal and minimum-cardinality solvers, deletion audits, boundary-safe qualifier perturbations, three-way decisions and a strict synthetic-benchmark loader.
 
 - Initial RED: focused test collection failed with `ModuleNotFoundError: memoryrush.admission`.
 - Perturbation RED: `2 failed, 45 passed` because the audit interface was not implemented.
 - Benchmark-integrity RED: 15 failures exposed repeated-text provenance ambiguity, unknown-field acceptance and untruthful label/status combinations.
-- Current GREEN: `62 passed in 0.54s` at local HEAD `d042dbb`.
+- Stable committed GREEN before the current runner TDD: `187 passed in 3.99s`.
+
+The repository now contains a canonical 36-case JSONL microbenchmark at SHA-256 `013c7fd918599ad5d37e7dcaacd35f09f1c5549186f474195a2957f69b533371`: 20 ADMIT, 13 REJECT and 3 REVIEW across 14 families. Provenance is 25 agent/LLM-authored provisional labels and 11 mechanically constructed synthetic-oracle labels. None are human gold. C014/C023/C026 remain explicit semantic risks. The semantic-sham provenance, qualifier-loss representation and truncated evidence spans were corrected before any method or model result was observed.
+
+The evaluator keeps oracle decisions outside prediction records, requires exact case-universe joins and reports REVIEW separately from REJECT. Fixed-count matched admission is explicit opt-in and is documented as neither calibrated nor automatically fair. A local Ollama adapter for `qwen3:8b` now uses a versioned prompt, JSON schema, seed/temperature/context controls, strict envelope validation and raw-run metadata. Its offline tests include frozen qualifier-edge matrices, but it has not yet been run on the benchmark.
+
+The deterministic runner/CLI is currently `LOCAL_IN_PROGRESS`: its files are untracked and undergoing adversarial TDD for protocol/artifact alignment. It is not counted as implemented, verified or committed here.
 
 This verifies framework behavior and adversarial invariants only. No strong semantic verifier or admission advantage has yet been measured.
 
@@ -63,8 +69,8 @@ The ignored qwen artifact revalidates structurally, but independent human semant
 
 ## Not Yet Established
 
-- semantic verifier accuracy;
-- evidence solver correctness;
+- semantic verifier benchmark accuracy (the adapter/plumbing alone is verified);
+- evidence solver effectiveness beyond synthetic certificate recomputation;
 - deletion or perturbation audit benefit;
 - matched-coverage results;
 - downstream unsupported-answer reduction;
