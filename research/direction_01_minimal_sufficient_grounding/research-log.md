@@ -31,6 +31,8 @@ Append-only timeline. Commands and claims are recorded with validation state; ti
 | 25 | 2026-08-14 03:52 | failure | Independent review found benchmark form-REVIEW handling could upgrade an evidence REJECT, diverging from runtime. A RED counterexample failed 1/33; one shared claim-form override made focused 45 and full 114 pass. |
 | 26 | 2026-08-14 03:53–03:57 | benchmark | Froze a 36-case public-safe design catalog: 20/13/3 ADMIT/REJECT/REVIEW, 22 agent-provisional and 14 programmatic-oracle cases. It records pairs, leakage risks and three semantic review risks; it is not yet materialized JSONL or human gold. |
 | 27 | 2026-08-14 03:57 | checkpoint | Pushed stable HEAD `eb01afb`; evaluator and benchmark materializer are parallel uncommitted TDD and are explicitly excluded from this checkpoint. |
+| 28 | 2026-08-14 03:58–04:14 | TDD and benchmark freeze | Added provenance-safe evaluator, deeply immutable admission contracts and a traceable Ollama verifier adapter. Materialized 36 cases only after fixing qualifier-loss encoding, self-contained evidence visibility and semantic-sham provenance; stable JSONL hash is `013c7f...3371`. No method had been run when these corrections were made. |
+| 29 | 2026-08-14 04:15 | protocol | Locked `DETERMINISTIC_RUN_PROTOCOL.md` before deterministic baseline results. The run is plumbing/debugging over all cases; only ten mechanically interpretable transformations are eligible for a narrow exact-outcome confirmatory description. |
 
 ## Command ledger
 
