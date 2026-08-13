@@ -77,47 +77,6 @@ reinforcement 和 decay 是否能让长期 retrieval ranking 优于静态 memory
 
 这是原始想法的重要部分，但应放在第一条 memory-unit extraction 和 evaluation 闭环跑通之后。
 
-## 范围
-
-### 第一条研究 slice
-
-第一条 slice 应处理一篇 TXT 或 Markdown 文章，并产出可 review 的结构化结果：
-
-- 标准化文章 metadata。
-- 有序 source paragraphs。
-- 简短 summary。
-- 3-7 个候选 core ideas。
-- memory units。
-- evidence references。
-- recall questions。
-- validation report。
-
-早期可以先手动 review 输出。完整 UI 有用，但第一阶段应先证明 pipeline 和 schema。
-
-### 第一个可验证原型必须包含
-
-- TXT 和 Markdown ingestion。
-- 稳定 paragraph IDs。
-- 结构化 memory-unit schema。
-- deterministic fake-provider tests。
-- 本地 LLM provider 路径，优先 Ollama。
-- 本地输出存储，早期可用 JSONL 或 SQLite。
-- 10-20 篇文章的 benchmark，包含人工标注 salient passages 或 expected memory units。
-- evaluation 脚本，覆盖 schema validity、evidence coverage、salience ranking、duplicate rate。
-
-### 原型有用之后再做
-
-- PDF、DOCX、URL ingestion。
-- 多文档召回。
-- embedding search 和 vector indexes。
-- reinforcement 和 decay。
-- highlight-driven personalization。
-- memories 之间的 graph relations。
-- custom model training。
-- polished Streamlit workflow。
-
-这些不是被否定，而是排在第一条可验证 extraction/evaluation 闭环之后。
-
 
 ## 技术栈
 
@@ -129,7 +88,7 @@ reinforcement 和 decay 是否能让长期 retrieval ranking 优于静态 memory
 - 本地 UI：Streamlit，在 pipeline 稳定之后。
 - 本地 LLM：Ollama first。
 - 存储：早期 generated artifacts 用 JSONL；review state 需要查询后再用 SQLite。
-- ML/evaluation：scikit-learn、pandas、numpy。
+- ML/evaluation：scikit-learn、pandas、numpy, huggingface.
 - 后续 embeddings：sentence-transformers。
 - 后续 vector search：FAISS，仅在 retrieval experiments 开始后引入。
 - 测试：pytest。
@@ -154,16 +113,6 @@ CLI / Streamlit
     -> local storage
     -> evaluation
 ```
-
-### 备选方案比较
-
-| 方案 | 优点 | 对 MemoryRush 的问题 | 决策 |
-|---|---|---|---|
-| 只用 Notebook | 最快画出研究草图 | 难测试、难版本化、难复现 | 只用于探索，不做核心 pipeline |
-| 模块化 Python package | 可测试、可复用、适合研究 | 比 notebook 多一点结构成本 | 采用 |
-| 单独 backend + frontend | 后期边界更清楚 | 在研究验证前增加 API 和部署负担 | 延后 |
-| 先做完整 RAG stack | 熟悉、容易展示 | 会推迟最独特的 memory-unit 问题 | extraction baseline 后再做 |
-| 先训练自定义模型 | ML 味更强 | schema 和标签没稳定前训练没有意义 | benchmark 存在后再做 |
 
 ## Domain Model
 
@@ -421,9 +370,3 @@ Never:
 - artifact 记录 prompt/model/config metadata。
 - 10-20 篇文章 benchmark 格式已定义。
 
-## Open Questions
-
-1. 第一版 manual benchmark 做 10 篇还是 20 篇？
-2. 早期 generated artifacts 用 JSONL，还是直接引入 SQLite？
-3. 默认本地模型用 `qwen2.5:7b-instruct`，还是机器上可用的其他 Qwen/Llama 模型？
-4. 项目名继续使用 MemoryRush、概念名使用 MemoryPoint，还是统一成一个名称？
