@@ -29,38 +29,44 @@ MemoryRush should restart as a personal AI/ML research prototype. The first usef
 
 ### Phase 1: Evidence-Preserving Source Representation
 
-- [ ] Task 1: Finalize source document and paragraph contracts.
-- [ ] Task 2: Verify TXT/Markdown parser behavior against the contracts.
+- [x] Task 1: Finalize source document and paragraph contracts.
+- [x] Task 2: Verify TXT/Markdown parser behavior against the contracts.
 
 ### Checkpoint: Source Representation
 
-- [ ] Sample documents parse into stable ordered paragraphs.
-- [ ] Unsupported inputs fail clearly.
-- [ ] Parsed output can be serialized and used by later pipeline steps.
+- [x] Sample documents parse into stable ordered paragraphs.
+- [x] Unsupported inputs fail clearly.
+- [x] Parsed output can be serialized and used by later pipeline steps.
+
+Note: focused parser behavior was verified with compile checks, parser script output, and manual assertions. The formal `pytest` command is pending until `pytest` is installed in the active Python environment.
 
 ### Phase 2: Structured Memory Pipeline
 
-- [ ] Task 3: Define structured memory output contracts.
-- [ ] Task 4: Add output validation rules.
-- [ ] Task 5: Build fake-provider end-to-end pipeline test.
+- [x] Task 3: Define structured memory output contracts.
+- [x] Task 4: Add output validation rules.
+- [x] Task 5: Build fake-provider end-to-end pipeline test.
 
 ### Checkpoint: Pipeline Shape
 
-- [ ] Valid fake output passes.
-- [ ] Missing or invalid evidence fails.
-- [ ] Pipeline tests do not require a live model.
+- [x] Valid fake output passes.
+- [x] Missing or invalid evidence fails.
+- [x] Pipeline tests do not require a live model.
+
+Note: Phase 2 contracts currently use standard-library dataclasses because `pydantic` is not installed in the active environment. The behavior is covered by manual assertions and compile checks; formal `pytest` remains pending until test dependencies are installed.
 
 ### Phase 3: Local LLM Prototype
 
-- [ ] Task 6: Add local LLM provider interface and Ollama adapter.
-- [ ] Task 7: Create the first versioned memory extraction prompt.
-- [ ] Task 8: Save one local model run artifact for a sample article.
+- [x] Task 6: Add local LLM provider interface and Ollama adapter.
+- [x] Task 7: Create the first versioned memory extraction prompt.
+- [x] Task 8: Save one local model run artifact for a sample article.
 
 ### Checkpoint: First Real Output
 
-- [ ] One sample article produces summary, memory units, evidence, and recall questions.
-- [ ] Prompt version, model name, and validation result are recorded.
-- [ ] Failure modes are documented.
+- [x] One sample article produces summary, memory units, evidence, and recall questions with the deterministic fake provider.
+- [x] Prompt version, model name, and validation result are recorded.
+- [x] Failure modes and limitations are documented for a real local model run.
+
+Note: `qwen3:8b` completed a real Ollama run on the RTX 3070 Ti Laptop GPU and produced `data/processed/qwen3_8b_article_memory_artifact.json`. The output passed the current schema/evidence validation. Manual review found uncalibrated salience scores, one inaccurate tag, and no semantic proof that each complete MemoryUnit is supported by its cited evidence.
 
 ### Phase 4: Benchmark And Evaluation
 

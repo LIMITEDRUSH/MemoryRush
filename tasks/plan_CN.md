@@ -29,38 +29,44 @@ MemoryRush 应重新作为个人 AI/ML 研究原型推进。第一条有价值�
 
 ### Phase 1: Evidence-Preserving Source Representation
 
-- [ ] Task 1: 确认 source document 和 paragraph contracts。
-- [ ] Task 2: 根据 contracts 验证 TXT/Markdown parser 行为。
+- [x] Task 1: 确认 source document 和 paragraph contracts。
+- [x] Task 2: 根据 contracts 验证 TXT/Markdown parser 行为。
 
 ### Checkpoint: Source Representation
 
-- [ ] sample documents 能解析成稳定有序 paragraphs。
-- [ ] unsupported inputs 有清楚错误。
-- [ ] parsed output 能序列化并供后续 pipeline 使用。
+- [x] sample documents 能解析成稳定有序 paragraphs。
+- [x] unsupported inputs 有清楚错误。
+- [x] parsed output 能序列化并供后续 pipeline 使用。
+
+说明：parser 行为已通过 compile checks、parser script output 和手工 assertions 验证。正式 `pytest` 命令需要等当前 Python 环境安装 `pytest` 后再跑。
 
 ### Phase 2: Structured Memory Pipeline
 
-- [ ] Task 3: 定义 structured memory output contracts。
-- [ ] Task 4: 添加 output validation rules。
-- [ ] Task 5: 构建 fake-provider end-to-end pipeline test。
+- [x] Task 3: 定义 structured memory output contracts。
+- [x] Task 4: 添加 output validation rules。
+- [x] Task 5: 构建 fake-provider end-to-end pipeline test。
 
 ### Checkpoint: Pipeline Shape
 
-- [ ] valid fake output 通过。
-- [ ] missing 或 invalid evidence 失败。
-- [ ] pipeline tests 不需要 live model。
+- [x] valid fake output 通过。
+- [x] missing 或 invalid evidence 失败。
+- [x] pipeline tests 不需要 live model。
+
+说明：Phase 2 contracts 当前使用标准库 dataclasses，因为 active environment 没有安装 `pydantic`。行为已通过手工 assertions 和 compile checks 验证；正式 `pytest` 仍需等测试依赖安装后再跑。
 
 ### Phase 3: Local LLM Prototype
 
-- [ ] Task 6: 添加 local LLM provider interface 和 Ollama adapter。
-- [ ] Task 7: 创建第一版 versioned memory extraction prompt。
-- [ ] Task 8: 为一篇 sample article 保存 local model run artifact。
+- [x] Task 6: 添加 local LLM provider interface 和 Ollama adapter。
+- [x] Task 7: 创建第一版 versioned memory extraction prompt。
+- [x] Task 8: 为一篇 sample article 保存 local model run artifact。
 
 ### Checkpoint: First Real Output
 
-- [ ] 一篇 sample article 生成 summary、memory units、evidence 和 recall questions。
-- [ ] prompt version、model name、validation result 被记录。
-- [ ] failure modes 被记录。
+- [x] 使用 deterministic fake provider 时，一篇 sample article 能生成 summary、memory units、evidence 和 recall questions。
+- [x] prompt version、model name、validation result 被记录。
+- [x] 真实 local model run 的 failure modes 和限制已记录。
+
+说明：`qwen3:8b` 已通过 Ollama 在 RTX 3070 Ti Laptop GPU 上完成真实运行，并生成 `data/processed/qwen3_8b_article_memory_artifact.json`。输出通过当前 schema/evidence validation。人工检查发现 salience 分数未校准、一个 tag 不准确，而且当前 validation 尚不能证明 MemoryUnit 的完整语义被证据支持。
 
 ### Phase 4: Benchmark And Evaluation
 

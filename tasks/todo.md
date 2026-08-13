@@ -29,13 +29,13 @@ Chinese version: [todo_CN.md](todo_CN.md)
 **Description:** Define the minimal source document and paragraph fields needed for evidence-grounded memory extraction.
 
 **Acceptance criteria:**
-- [ ] Document contract includes ID, title, source path or source label, document type, and paragraphs.
-- [ ] Paragraph contract includes stable ID, text, position, and source reference.
-- [ ] Contract names match the research spec or a documented compatibility reason exists.
+- [x] Document contract includes ID, title, source path or source label, document type, and paragraphs.
+- [x] Paragraph contract includes stable ID, text, position, and source reference.
+- [x] Contract names match the research spec or a documented compatibility reason exists.
 
 **Verification:**
-- [ ] Existing parser tests pass.
-- [ ] Manual review against `docs/RESEARCH_SPEC.md`.
+- [ ] Existing parser tests pass. Pending: `pytest` is not installed in the active environment.
+- [x] Manual review against `docs/RESEARCH_SPEC.md`.
 
 **Dependencies:** Task 0
 
@@ -50,14 +50,14 @@ Chinese version: [todo_CN.md](todo_CN.md)
 **Description:** Ensure TXT and Markdown inputs produce stable ordered paragraphs suitable for evidence references.
 
 **Acceptance criteria:**
-- [ ] `.txt`, `.md`, and `.markdown` inputs are supported.
-- [ ] Unsupported suffixes fail clearly.
-- [ ] Paragraph IDs are stable for unchanged content.
-- [ ] Markdown H1 title extraction is covered by tests.
+- [x] `.txt`, `.md`, and `.markdown` inputs are supported.
+- [x] Unsupported suffixes fail clearly.
+- [x] Paragraph IDs are stable for unchanged content.
+- [x] Markdown H1 title extraction is covered by tests.
 
 **Verification:**
-- [ ] `python scripts/parse_docs.py data/sample_docs`
-- [ ] `python -m pytest tests/test_text_parser.py`
+- [x] `python scripts/parse_docs.py data/sample_docs`
+- [ ] `python -m pytest tests/test_text_parser.py`. Pending: `pytest` is not installed in the active environment.
 
 **Dependencies:** Task 1
 
@@ -73,14 +73,14 @@ Chinese version: [todo_CN.md](todo_CN.md)
 **Description:** Create typed contracts for summary, core ideas, evidence spans, memory units, recall questions, and processing runs.
 
 **Acceptance criteria:**
-- [ ] Every memory unit requires at least one evidence paragraph ID.
-- [ ] Confidence and salience scores are bounded.
-- [ ] Recall questions link to a memory unit.
-- [ ] Processing run metadata can store prompt version and model name.
+- [x] Every memory unit requires at least one evidence paragraph ID.
+- [x] Confidence and salience scores are bounded.
+- [x] Recall questions link to a memory unit.
+- [x] Processing run metadata can store prompt version and model name.
 
 **Verification:**
-- [ ] Contract unit tests instantiate valid examples.
-- [ ] Invalid examples fail validation.
+- [x] Contract unit tests instantiate valid examples.
+- [x] Invalid examples fail validation.
 
 **Dependencies:** Task 2
 
@@ -95,13 +95,13 @@ Chinese version: [todo_CN.md](todo_CN.md)
 **Description:** Validate that generated evidence references point to real source paragraphs and that outputs are not empty or duplicated.
 
 **Acceptance criteria:**
-- [ ] Unknown paragraph IDs are reported as validation issues.
-- [ ] Empty memory units are rejected.
-- [ ] Duplicate memory units are flagged.
-- [ ] Validation output is inspectable by tests and scripts.
+- [x] Unknown paragraph IDs are reported as validation issues.
+- [x] Empty memory units are rejected.
+- [x] Duplicate memory units are flagged.
+- [x] Validation output is inspectable by tests and scripts.
 
 **Verification:**
-- [ ] `python -m pytest tests/pipeline`
+- [ ] `python -m pytest tests/pipeline`. Pending: `pytest` is not installed in the active environment.
 
 **Dependencies:** Task 3
 
@@ -116,13 +116,13 @@ Chinese version: [todo_CN.md](todo_CN.md)
 **Description:** Connect parsing, provider output, validation, and artifact generation with a deterministic fake provider.
 
 **Acceptance criteria:**
-- [ ] One sample article flows through the pipeline without a live model.
-- [ ] Valid fake output produces a valid artifact.
-- [ ] Invalid fake output produces validation issues.
+- [x] One sample article flows through the pipeline without a live model.
+- [x] Valid fake output produces a valid artifact.
+- [x] Invalid fake output produces validation issues.
 
 **Verification:**
-- [ ] `python -m pytest tests/pipeline`
-- [ ] `python -m compileall memoryrush scripts app tests`
+- [ ] `python -m pytest tests/pipeline`. Pending: `pytest` is not installed in the active environment.
+- [x] `python -m compileall memoryrush scripts app tests`
 
 **Dependencies:** Task 4
 
@@ -138,13 +138,13 @@ Chinese version: [todo_CN.md](todo_CN.md)
 **Description:** Add a provider interface and an Ollama adapter without putting provider details into domain or UI code.
 
 **Acceptance criteria:**
-- [ ] Provider interface accepts prompt/context and returns structured text or JSON.
-- [ ] Ollama adapter handles missing service/model errors clearly.
-- [ ] Tests can use the fake provider without importing Ollama-specific code.
+- [x] Provider interface accepts prompt/context and returns structured text or JSON.
+- [x] Ollama adapter handles missing service/model errors clearly.
+- [x] Tests can use the fake provider without importing Ollama-specific code.
 
 **Verification:**
-- [ ] Provider unit tests.
-- [ ] Manual Ollama smoke test when model is installed.
+- [x] Provider unit tests.
+- [x] Manual Ollama smoke test when model is installed.
 
 **Dependencies:** Task 5
 
@@ -159,13 +159,13 @@ Chinese version: [todo_CN.md](todo_CN.md)
 **Description:** Write the first prompt template for article-to-memory extraction and keep it outside UI code.
 
 **Acceptance criteria:**
-- [ ] Prompt asks for summary, core ideas, memory units, evidence IDs, and recall questions.
-- [ ] Prompt version is stored with processing results.
-- [ ] Prompt explicitly requires evidence paragraph IDs from the source context.
+- [x] Prompt asks for summary, core ideas, memory units, evidence IDs, and recall questions.
+- [x] Prompt version is stored with processing results.
+- [x] Prompt explicitly requires evidence paragraph IDs from the source context.
 
 **Verification:**
-- [ ] Manual prompt review.
-- [ ] Fake-provider or prompt-rendering test.
+- [x] Manual prompt review.
+- [x] Fake-provider or prompt-rendering test.
 
 **Dependencies:** Task 6
 
@@ -181,13 +181,14 @@ Chinese version: [todo_CN.md](todo_CN.md)
 **Description:** Process one safe sample article through the local model and save an inspectable artifact.
 
 **Acceptance criteria:**
-- [ ] Artifact includes input document ID, prompt version, model name, raw output, parsed output, and validation status.
-- [ ] No private data is used.
-- [ ] Failure modes are documented if output is invalid.
+- [x] Artifact includes input document ID, prompt version, model name, raw output, parsed output, and validation status with the fake provider.
+- [x] No private data is used.
+- [x] Real local-model failure modes and validation limitations are recorded.
 
 **Verification:**
-- [ ] `ollama pull qwen2.5:7b-instruct`
-- [ ] `python scripts/process_article.py data/sample_docs/reading_memory_example.txt`
+- [x] `ollama pull qwen3:8b`
+- [x] `python scripts/process_article.py data/sample_docs/reading_memory_example.txt --provider ollama --model qwen3:8b --output data/processed/qwen3_8b_article_memory_artifact.json`
+- [x] `python scripts/process_article.py data/sample_docs/reading_memory_example.txt --provider fake`
 
 **Dependencies:** Task 7
 

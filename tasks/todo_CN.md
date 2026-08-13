@@ -29,13 +29,13 @@
 **说明：** 定义 evidence-grounded memory extraction 所需的最小 source document 和 paragraph 字段。
 
 **验收标准：**
-- [ ] Document contract 包含 ID、title、source path 或 source label、document type、paragraphs。
-- [ ] Paragraph contract 包含 stable ID、text、position、source reference。
-- [ ] contract 命名和 research spec 一致，或记录兼容原因。
+- [x] Document contract 包含 ID、title、source path 或 source label、document type、paragraphs。
+- [x] Paragraph contract 包含 stable ID、text、position、source reference。
+- [x] contract 命名和 research spec 一致，或记录兼容原因。
 
 **验证：**
-- [ ] 现有 parser tests 通过。
-- [ ] 对照 `docs/RESEARCH_SPEC.md` 手动 review。
+- [ ] 现有 parser tests 通过。待处理：当前 Python 环境未安装 `pytest`。
+- [x] 对照 `docs/RESEARCH_SPEC.md` 手动 review。
 
 **依赖：** Task 0
 
@@ -50,14 +50,14 @@
 **说明：** 确保 TXT 和 Markdown 输入能产生适合 evidence references 的稳定有序 paragraphs。
 
 **验收标准：**
-- [ ] 支持 `.txt`、`.md`、`.markdown`。
-- [ ] unsupported suffixes 有清楚失败信息。
-- [ ] unchanged content 的 paragraph IDs 稳定。
-- [ ] Markdown H1 title extraction 有测试覆盖。
+- [x] 支持 `.txt`、`.md`、`.markdown`。
+- [x] unsupported suffixes 有清楚失败信息。
+- [x] unchanged content 的 paragraph IDs 稳定。
+- [x] Markdown H1 title extraction 有测试覆盖。
 
 **验证：**
-- [ ] `python scripts/parse_docs.py data/sample_docs`
-- [ ] `python -m pytest tests/test_text_parser.py`
+- [x] `python scripts/parse_docs.py data/sample_docs`
+- [ ] `python -m pytest tests/test_text_parser.py`。待处理：当前 Python 环境未安装 `pytest`。
 
 **依赖：** Task 1
 
@@ -73,14 +73,14 @@
 **说明：** 创建 summary、core ideas、evidence spans、memory units、recall questions、processing runs 的 typed contracts。
 
 **验收标准：**
-- [ ] 每个 memory unit 至少要求一个 evidence paragraph ID。
-- [ ] confidence 和 salience scores 有范围限制。
-- [ ] recall questions 链接到 memory unit。
-- [ ] processing run metadata 可以记录 prompt version 和 model name。
+- [x] 每个 memory unit 至少要求一个 evidence paragraph ID。
+- [x] confidence 和 salience scores 有范围限制。
+- [x] recall questions 链接到 memory unit。
+- [x] processing run metadata 可以记录 prompt version 和 model name。
 
 **验证：**
-- [ ] contract unit tests 能实例化 valid examples。
-- [ ] invalid examples validation 失败。
+- [x] contract unit tests 能实例化 valid examples。
+- [x] invalid examples validation 失败。
 
 **依赖：** Task 2
 
@@ -95,13 +95,13 @@
 **说明：** 验证 generated evidence references 是否指向真实 source paragraphs，并检查空/重复输出。
 
 **验收标准：**
-- [ ] unknown paragraph IDs 被报告为 validation issues。
-- [ ] empty memory units 被拒绝。
-- [ ] duplicate memory units 被标记。
-- [ ] validation output 可被 tests 和 scripts 检查。
+- [x] unknown paragraph IDs 被报告为 validation issues。
+- [x] empty memory units 被拒绝。
+- [x] duplicate memory units 被标记。
+- [x] validation output 可被 tests 和 scripts 检查。
 
 **验证：**
-- [ ] `python -m pytest tests/pipeline`
+- [ ] `python -m pytest tests/pipeline`。待处理：当前 Python 环境未安装 `pytest`。
 
 **依赖：** Task 3
 
@@ -116,13 +116,13 @@
 **说明：** 用 deterministic fake provider 串起 parsing、provider output、validation 和 artifact generation。
 
 **验收标准：**
-- [ ] 一个 sample article 可以不依赖 live model 跑完 pipeline。
-- [ ] valid fake output 生成 valid artifact。
-- [ ] invalid fake output 生成 validation issues。
+- [x] 一个 sample article 可以不依赖 live model 跑完 pipeline。
+- [x] valid fake output 生成 valid artifact。
+- [x] invalid fake output 生成 validation issues。
 
 **验证：**
-- [ ] `python -m pytest tests/pipeline`
-- [ ] `python -m compileall memoryrush scripts app tests`
+- [ ] `python -m pytest tests/pipeline`。待处理：当前 Python 环境未安装 `pytest`。
+- [x] `python -m compileall memoryrush scripts app tests`
 
 **依赖：** Task 4
 
@@ -138,13 +138,13 @@
 **说明：** 添加 provider interface 和 Ollama adapter，避免 provider details 进入 domain 或 UI。
 
 **验收标准：**
-- [ ] Provider interface 接收 prompt/context，返回 structured text 或 JSON。
-- [ ] Ollama adapter 对 missing service/model 给出清楚错误。
-- [ ] 测试可使用 fake provider，不 import Ollama-specific code。
+- [x] Provider interface 接收 prompt/context，返回 structured text 或 JSON。
+- [x] Ollama adapter 对 missing service/model 给出清楚错误。
+- [x] 测试可使用 fake provider，不 import Ollama-specific code。
 
 **验证：**
-- [ ] Provider unit tests。
-- [ ] 模型安装后进行 manual Ollama smoke test。
+- [x] Provider unit tests。
+- [x] 模型安装后进行 manual Ollama smoke test。
 
 **依赖：** Task 5
 
@@ -159,13 +159,13 @@
 **说明：** 编写第一版 article-to-memory extraction prompt，并把它放在 UI 之外。
 
 **验收标准：**
-- [ ] Prompt 要求 summary、core ideas、memory units、evidence IDs、recall questions。
-- [ ] prompt version 和 processing results 一起保存。
-- [ ] Prompt 明确要求 evidence paragraph IDs 来自 source context。
+- [x] Prompt 要求 summary、core ideas、memory units、evidence IDs、recall questions。
+- [x] prompt version 和 processing results 一起保存。
+- [x] Prompt 明确要求 evidence paragraph IDs 来自 source context。
 
 **验证：**
-- [ ] Manual prompt review。
-- [ ] fake-provider 或 prompt-rendering test。
+- [x] Manual prompt review。
+- [x] fake-provider 或 prompt-rendering test。
 
 **依赖：** Task 6
 
@@ -181,13 +181,14 @@
 **说明：** 用 local model 处理一篇安全 sample article，并保存可检查 artifact。
 
 **验收标准：**
-- [ ] Artifact 包含 input document ID、prompt version、model name、raw output、parsed output、validation status。
-- [ ] 不使用私人数据。
-- [ ] 如果输出 invalid，记录 failure modes。
+- [x] 使用 fake provider 时，artifact 包含 input document ID、prompt version、model name、raw output、parsed output、validation status。
+- [x] 不使用私人数据。
+- [x] 记录真实 local model 的 failure modes 和 validation limitations。
 
 **验证：**
-- [ ] `ollama pull qwen2.5:7b-instruct`
-- [ ] `python scripts/process_article.py data/sample_docs/reading_memory_example.txt`
+- [x] `ollama pull qwen3:8b`
+- [x] `python scripts/process_article.py data/sample_docs/reading_memory_example.txt --provider ollama --model qwen3:8b --output data/processed/qwen3_8b_article_memory_artifact.json`
+- [x] `python scripts/process_article.py data/sample_docs/reading_memory_example.txt --provider fake`
 
 **依赖：** Task 7
 
