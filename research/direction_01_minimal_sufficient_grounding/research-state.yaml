@@ -5,7 +5,7 @@ project:
   completion_status: INCOMPLETE
   started_at: "2026-08-14T02:43:37+08:00"
   minimum_work_until: "2026-08-14T12:43:37+08:00"
-  current_phase: "phase_0_audit_plus_phase_3_contract_slice"
+  current_phase: "phase_1_novelty_audit_plus_phase_2_3_benchmark_framework"
   locked_core_path: "DIRECTION_CHARTER.md"
 
 git:
@@ -25,15 +25,20 @@ completed:
   - "Verified pre-change suite: 15 tests passed; compile, CLI and fake smoke passed"
   - "Locked pilot protocol in commit 08d9387 before Direction 1 results"
   - "Reproduced current validator modality-strengthening false positive as DEBUGGING evidence"
-  - "Completed first TDD contract slice; full suite now 20 tests passed"
+  - "Completed independent environment/artifact audit and verified existing qwen artifact is structurally valid but semantically unsupported in multiple qualifier dimensions"
+  - "Completed first independent closest-work audit over 41 deduplicated candidates and 20 deeply checked works"
+  - "Implemented provisional contracts, bounded solvers, deletion audit, controlled perturbations and three-way decision plumbing"
+  - "Fixed slot-level qualifier coverage, compositional PARTIAL support, candidate-pool conflict handling and solver boundary validation"
+  - "Made benchmark loader fail closed on unknown fields, provenance-status mismatches and ambiguous frozen-snapshot paragraph locations"
+  - "Verified current full suite: 62 tests passed"
 
 hypotheses:
   - id: H1
-    status: pending
+    status: pending_confirmatory
     priority: high
     statement: "At matched admission coverage and compute, joint admission reduces false admissions relative to ID-only, exact-quote, and strong semantic-verifier baselines."
   - id: H2
-    status: pending
+    status: plumbing_verified_effect_unmeasured
     priority: high
     statement: "Deletion and qualifier perturbation audits identify unsupported or semantically strengthened candidates missed by identifier/quote validity checks."
   - id: H3
@@ -77,6 +82,15 @@ failures:
   - id: tdd_red_contracts_001
     status: expected_failure
     summary: "Focused test collection failed because memoryrush.admission did not exist; minimal contract slice then made tests green."
+  - id: tdd_red_perturbation_001
+    status: resolved
+    summary: "Two perturbation-audit tests failed because evaluate_admission lacked the declared interface; implementation made focused and full suites green."
+  - id: tdd_red_benchmark_integrity_001
+    status: resolved
+    summary: "Fifteen benchmark integrity tests exposed missing snapshot offsets, unknown-field acceptance and invalid provenance/status pairs; fail-closed loader and schema made them green."
+  - id: audit_novelty_001
+    status: open_scientific_risk
+    summary: "Closest work covers every individual component and generic write-time support gating; only a narrow joint-certificate interaction claim remains untested."
 
 blocked_decisions:
   - "Formal atomic/qualifier schema"
@@ -85,13 +99,21 @@ blocked_decisions:
   - "Formal REVIEW policy, benchmark, model family, annotation plan, metric and threshold"
 
 next_steps:
-  - "Complete qwen3:8b artifact/environment audit"
-  - "Complete literature and code evidence audits"
-  - "Implement support solver and verifier protocols through separate TDD slices"
-  - "Freeze synthetic oracle fixtures before confirmatory evaluation"
+  - "Freeze synthetic oracle fixtures and hashes before any confirmatory evaluation"
+  - "Implement ID-only, exact-quote, fake-oracle and deterministic semantic baselines plus evaluation runner"
+  - "Add risk-coverage, matched-coverage and frozen downstream propagation metrics"
+  - "Run deterministic end-to-end benchmark, deletion and perturbation ablations"
+  - "Complete production-validator hardening and final code audit without confusing structural validity with semantic support"
 
 workspace:
   root: "research/direction_01_minimal_sufficient_grounding"
   findings: "findings.md"
   log: "research-log.md"
   experiment_log: "EXPERIMENT_LOG.jsonl"
+
+checkpoint:
+  updated_at: "2026-08-14T03:22:24+08:00"
+  head: "d042dbb"
+  pushed_through: "08d9387"
+  full_tests: "62 passed in 0.54s"
+  novelty_status: "MIXED_NOT_YET_DEMONSTRATED"

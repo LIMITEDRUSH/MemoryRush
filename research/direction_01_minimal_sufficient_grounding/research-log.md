@@ -18,6 +18,14 @@ Append-only timeline. Commands and claims are recorded with validation state; ti
 | 12 | 2026-08-14 02:55 | phase-0 | Pre-change full suite: 15 passed/0.26s; compile exit 0; CLI exit 0; fake pipeline exit 0. Fake artifact SHA-256 `7b3250...cb567`, 1,292 bytes, ignored. |
 | 13 | 2026-08-14 02:56 | inner-loop | `run-debug-001` reproduced current validator semantic blind spot: source says `may ... under tested configuration`, MemoryUnit says `always`, real paragraph ID causes current report to remain valid. Classified DEBUGGING because exact fixture was not frozen in the protocol commit. |
 | 14 | 2026-08-14 02:57 | tdd | Contract RED run failed during collection with `ModuleNotFoundError: memoryrush.admission`. Added only provisional models/enums/total-matrix invariants. Focused 5 passed; full regression 20 passed/0.18s; compile exit 0. |
+| 15 | 2026-08-14 03:00–03:10 | implementation | Added bounded inclusion-minimal and minimum-cardinality solvers, deletion audits, controlled qualifier perturbations, a provisional conservative three-way policy, and a strict synthetic-benchmark loader in separate commits. No production admission integration or effectiveness claim was made. |
+| 16 | 2026-08-14 03:11 | artifact audit | Independent read-only audit verified current qwen artifact structure but found modality, attribution and scope strengthening that the production validator accepts. Historical model digest/decoding/seed/hardware cannot be reconstructed from the saved artifact. |
+| 17 | 2026-08-14 03:12–03:20 | adversarial review | Independent code audit found same-kind qualifier collapse, non-composable PARTIAL cells, unselected evidence conflicts, unsafe raw string replacement, missing perturbation integration, ambiguous repeated-paragraph provenance, invalid label/status combinations, unknown-field acceptance and a replaceable-solver trust boundary. Each was reproduced with a failing test before repair. |
+| 18 | 2026-08-14 03:15 | tdd | Perturbation integration RED produced 2 failed/45 passed. Added structured perturbation audits and downgrade-on-undetected behavior; focused 20 and full 47 passed. |
+| 19 | 2026-08-14 03:18 | tdd | Benchmark integrity RED produced 15 failures. Added ordered global paragraph offsets, field allowlists at every schema level and explicit provenance/status pairs; focused 20 passed. |
+| 20 | 2026-08-14 03:20 | tdd | Added a forged-solver negative control. Orchestration now recomputes sufficiency and rejects inconsistent solver results. Full regression reached 62 passed. |
+| 21 | 2026-08-14 03:21 | commits | Committed semantic invariants as `f816259` and fail-closed benchmark provenance as `d042dbb`. Both are local at this checkpoint; remote is intentionally reported separately. |
+| 22 | 2026-08-14 03:22 | outer-loop | Independent literature audit deduplicated 41 candidates and deeply checked 20 closest works. It rejects all broad novelty formulations; only a narrow joint, counterfactual write-certificate interaction remains `MIXED / NOT YET DEMONSTRATED`. |
 
 ## Command ledger
 
@@ -34,3 +42,7 @@ Append-only timeline. Commands and claims are recorded with validation state; ti
 | Focused pytest before contracts implementation | TDD RED | 1 | Missing `memoryrush.admission` during collection |
 | Focused pytest after contracts implementation | TDD GREEN | 0 | 5 passed in 0.05s |
 | Full pytest after contracts implementation | Regression | 0 | 20 passed in 0.18s |
+| Focused perturbation/solver/decision tests after semantic fixes | TDD GREEN | 0 | 20 passed in 0.07s |
+| Benchmark integrity tests after fail-closed fixes | TDD GREEN | 0 | 20 passed in 0.08s |
+| `venv/research/Scripts/python.exe -B -m pytest -q -p no:cacheprovider` at `d042dbb` | Full regression | 0 | 62 passed in 0.54s |
+| JSON parse of `annotation-schema.json` | Schema syntax | 0 | `schema-json-ok` |

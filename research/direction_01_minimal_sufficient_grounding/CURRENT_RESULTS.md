@@ -1,7 +1,7 @@
 # Current Results
 
-Updated: `2026-08-14T02:58+08:00`  
-Overall evidence status: `NOT_YET_TESTABLE`
+Updated: `2026-08-14T03:22:24+08:00`
+Overall evidence status: `MIXED`
 
 ## Verified This Run
 
@@ -31,15 +31,26 @@ The candidate references the real paragraph ID. `validate_article_memory_output`
 
 Classification: `DEBUGGING`, not confirmatory. The exact fixture was written after protocol lock and is not evidence that the proposed method works.
 
-### Provisional contract implementation
+### Provisional research framework
 
-The first TDD slice added verifier/solver-agnostic contracts for candidate claims, atomic claims, qualifier slots, localized evidence spans, total support matrices and stable decision/support enums.
+The current TDD slices add verifier/solver-agnostic contracts, slot-specific qualifier coverage, localized evidence spans, total support matrices, bounded inclusion-minimal and minimum-cardinality solvers, deletion audits, boundary-safe qualifier perturbations, three-way decisions and a strict synthetic-benchmark loader.
 
-- RED: focused test collection failed with `ModuleNotFoundError: memoryrush.admission`.
-- GREEN: `5 passed in 0.05s` for the baseline regression plus contract tests.
-- Regression: `20 passed in 0.18s`; `compileall` exit 0.
+- Initial RED: focused test collection failed with `ModuleNotFoundError: memoryrush.admission`.
+- Perturbation RED: `2 failed, 45 passed` because the audit interface was not implemented.
+- Benchmark-integrity RED: 15 failures exposed repeated-text provenance ambiguity, unknown-field acceptance and untruthful label/status combinations.
+- Current GREEN: `62 passed in 0.54s` at local HEAD `d042dbb`.
 
-This verifies type invariants only. No solver, verifier or admission advantage is yet implemented or measured.
+This verifies framework behavior and adversarial invariants only. No strong semantic verifier or admission advantage has yet been measured.
+
+### Closest-work novelty audit
+
+The independent audit searched and deduplicated 41 candidates and deeply inspected 20 closest works using primary paper/proceedings sources. Every individual component and generic write-time support-gating claim has prior art. The surviving statement is deliberately narrow: a single double-sided, counterfactual write certificate may still be novel as a benchmark/evaluation protocol if an interaction gain survives strong compositional baselines and matched coverage/compute/downstream conditions.
+
+Status: broad novelty `CONTRADICTED_UNDER_TESTED_LITERATURE_SEARCH`; narrow delta `MIXED / NOT_YET_DEMONSTRATED`. Search non-discovery is not proof of absence.
+
+### Existing qwen artifact audit
+
+The ignored qwen artifact revalidates structurally, but independent human semantic inspection found modality, attribution and scope strengthening. Historical model digest, decoding, seed, input hash, hardware and latency are absent, so the original run is not fully reproducible. These observations are audit judgments, not human-gold benchmark labels.
 
 ## Failures Retained
 
@@ -60,4 +71,5 @@ This verifies type invariants only. No solver, verifier or admission advantage i
 - cross-domain/model consistency;
 - human annotation reliability;
 - novelty beyond closest work.
-
+- interaction benefit over ConsistencyGate/GAVEL/MEG/TriQua/holistic baselines;
+- any confirmatory synthetic benchmark result.
