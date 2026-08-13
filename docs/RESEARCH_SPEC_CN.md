@@ -2,10 +2,6 @@
 
 英文版：[RESEARCH_SPEC.md](RESEARCH_SPEC.md)
 
-## 状态
-
-这是下一轮规划的当前 source of truth。它取代之前偏产品化的 MVP 设计。开始实现前，应先确认本规格和 `docs/RESEARCH_PLAN.md` 的方向。
-
 ## 基本假设
 
 1. MemoryRush 是个人研究型 AI/ML 工程项目。
@@ -122,22 +118,6 @@ reinforcement 和 decay 是否能让长期 retrieval ranking 优于静态 memory
 
 这些不是被否定，而是排在第一条可验证 extraction/evaluation 闭环之后。
 
-### 明确不在当前范围
-
-- 账号系统。
-- 支付。
-- 定价。
-- 用户增长。
-- 营销页面。
-- 组织管理后台。
-- 默认云同步。
-- 大规模部署架构。
-- 移动端。
-- 浏览器插件。
-- 复杂权限。
-- 生产级 observability。
-
-这些内容不能帮助回答当前研究问题。
 
 ## 技术栈
 
