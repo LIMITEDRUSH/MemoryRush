@@ -66,6 +66,7 @@ def _payload() -> dict:
             "base_case_id": None,
             "perturbation_operator": None,
             "generator": "human_specified_by_agent",
+            "generator_type": "programmatic",
         },
     }
 
@@ -187,3 +188,37 @@ def test_admit_case_requires_an_oracle_minimal_evidence_set() -> None:
 
     with pytest.raises(ValueError, match="ADMIT oracle"):
         parse_benchmark_case(payload)
+
+
+def test_human_label_requires_explicit_human_generator_type() -> None:
+    payload = _payload()
+    payload["oracle"].update(
+        {"label_source": "human", "adjudication_status": "human_gold"}
+    )
+    payload["provenance"]["generator"] = "gpt-5"
+    payload["provenance"]["generator_type"] = "llm_or_agent"
+
+    with pytest.raises(ValueError, match="label source/generator type"):
+        parse_benchmark_case(payload)
+
+
+def test_perturbation_operator_must_be_controlled_and_paired() -> None:
+    payload = _payload()
+    payload["provenance"].update(
+        {"base_case_id": "base-001", "perturbation_operator": "arbitrary_magic"}
+    )
+
+    with pytest.raises(ValueError, match="unsupported perturbation_operator"):
+        parse_benchmark_case(payload)
+
+
+def test_load_benchmark_rejects_unknown_counterfactual_base_case(tmp_path) -> None:
+    payload = _payload()
+    payload["provenance"].update(
+        {"base_case_id": "base-missing", "perturbation_operator": "replace_modality"}
+    )
+    path = tmp_path / "benchmark.jsonl"
+    path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unknown base_case_id"):
+        load_benchmark(path)

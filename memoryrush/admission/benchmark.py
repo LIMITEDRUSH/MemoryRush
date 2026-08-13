@@ -25,6 +25,17 @@ from memoryrush.admission.models import (
 SUPPORTED_SCHEMA_VERSION = "direction1.synthetic_oracle.v0.1"
 LABEL_SOURCES = {"programmatic_oracle", "human", "llm_generated"}
 ADJUDICATION_STATUSES = {"synthetic_oracle", "provisional", "human_gold"}
+GENERATOR_TYPES = {"programmatic", "llm_or_agent", "human"}
+CONTROLLED_PERTURBATION_OPERATORS = {
+    "replace_entity",
+    "replace_quantifier",
+    "replace_time",
+    "flip_negation",
+    "delete_condition",
+    "delete_scope",
+    "replace_modality",
+    "replace_attribution",
+}
 ALLOWED_LABEL_STATUS_PAIRS = {
     ("programmatic_oracle", "synthetic_oracle"),
     ("llm_generated", "provisional"),
@@ -99,6 +110,7 @@ class CaseProvenance:
     base_case_id: str | None
     perturbation_operator: str | None
     generator: str
+    generator_type: str
 
 
 @dataclass(frozen=True)
@@ -179,6 +191,13 @@ def load_benchmark(path: str | Path) -> tuple[BenchmarkCase, ...]:
         cases.append(case)
     if not cases:
         raise ValueError("benchmark must contain at least one case")
+    case_ids = {case.case_id for case in cases}
+    for case in cases:
+        base_case_id = case.provenance.base_case_id
+        if base_case_id is not None and base_case_id not in case_ids:
+            raise ValueError(
+                f"case {case.case_id} references unknown base_case_id: {base_case_id}"
+            )
     return tuple(cases)
 
 
@@ -411,22 +430,53 @@ def _parse_provenance(
 ) -> CaseProvenance:
     _reject_unknown_fields(
         payload,
-        {"construction", "base_case_id", "perturbation_operator", "generator"},
+        {
+            "construction",
+            "base_case_id",
+            "perturbation_operator",
+            "generator",
+            "generator_type",
+        },
         "provenance",
     )
     construction = _require_text(payload.get("construction"), "provenance.construction")
     generator = _require_text(payload.get("generator"), "provenance.generator")
+    generator_type = _require_text(
+        payload.get("generator_type"), "provenance.generator_type"
+    )
+    if generator_type not in GENERATOR_TYPES:
+        raise ValueError(f"unsupported provenance.generator_type: {generator_type}")
     base_case_id = payload.get("base_case_id")
     perturbation_operator = payload.get("perturbation_operator")
     if base_case_id is not None and not isinstance(base_case_id, str):
         raise ValueError("provenance.base_case_id must be a string or null")
     if perturbation_operator is not None and not isinstance(perturbation_operator, str):
         raise ValueError("provenance.perturbation_operator must be a string or null")
-    if oracle.label_source == "human" and "agent" in generator.casefold():
-        raise ValueError("agent-generated provenance cannot claim a human label source")
+    if (base_case_id is None) != (perturbation_operator is None):
+        raise ValueError(
+            "provenance base_case_id and perturbation_operator must be paired"
+        )
+    if (
+        perturbation_operator is not None
+        and perturbation_operator not in CONTROLLED_PERTURBATION_OPERATORS
+    ):
+        raise ValueError(
+            f"unsupported perturbation_operator: {perturbation_operator}"
+        )
+    expected_generator_types = {
+        "programmatic_oracle": {"programmatic"},
+        "llm_generated": {"llm_or_agent"},
+        "human": {"human"},
+    }
+    if generator_type not in expected_generator_types[oracle.label_source]:
+        raise ValueError(
+            "oracle label source/generator type combination is inconsistent: "
+            f"{oracle.label_source}/{generator_type}"
+        )
     return CaseProvenance(
         construction=construction,
         base_case_id=base_case_id,
         perturbation_operator=perturbation_operator,
         generator=generator,
+        generator_type=generator_type,
     )

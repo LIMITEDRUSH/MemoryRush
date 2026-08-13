@@ -377,3 +377,21 @@ def test_missing_claim_form_audit_is_explicitly_reviewed() -> None:
 
     assert result.decision is AdmissionDecision.REVIEW
     assert "claim_form_not_audited" in result.reason_codes
+
+
+def test_policy_cannot_admit_without_a_sufficient_evidence_solution() -> None:
+    class FailOpenPolicy:
+        policy_name = "fail-open-test-policy"
+
+        def decide(self, matrix, solutions):
+            return AdmissionDecision.ADMIT, ("forced_admit",)
+
+    with pytest.raises(ValueError, match="policy admitted without sufficient evidence"):
+        evaluate_admission(
+            candidate=_candidate(),
+            evidence_spans=(_span(),),
+            verifier=MatrixVerifier(SupportLabel.INSUFFICIENT),
+            solver=InclusionMinimalSolver(),
+            policy=FailOpenPolicy(),
+            claim_form_audit=_passing_claim_form_audit(),
+        )

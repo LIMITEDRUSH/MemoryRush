@@ -106,3 +106,22 @@ def test_qualifier_replacement_respects_word_boundaries() -> None:
 
     assert perturbed.proposition == "mayhem always occur."
     assert perturbed.atomic_claims[0].text == "mayhem always occur."
+
+
+def test_attribution_slot_can_be_perturbed_without_repeating_it_in_atomic_text() -> None:
+    perturbation = replace_qualifier(
+        _candidate(),
+        kind=QualifierKind.ATTRIBUTION,
+        before="According to the report",
+        after="According to the vendor",
+    )
+
+    perturbed = perturbation.perturbed_candidate
+    assert perturbed.proposition.startswith("According to the vendor")
+    assert perturbed.atomic_claims[0].text.startswith("The system")
+    attribution = next(
+        slot
+        for slot in perturbed.atomic_claims[0].qualifiers
+        if slot.kind is QualifierKind.ATTRIBUTION
+    )
+    assert attribution.value == "According to the vendor"

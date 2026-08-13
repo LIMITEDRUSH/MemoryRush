@@ -125,12 +125,13 @@
     "provenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["construction", "base_case_id", "perturbation_operator", "generator"],
+      "required": ["construction", "base_case_id", "perturbation_operator", "generator", "generator_type"],
       "properties": {
         "construction": {"type": "string", "minLength": 1},
         "base_case_id": {"type": ["string", "null"]},
         "perturbation_operator": {"type": ["string", "null"]},
-        "generator": {"type": "string", "minLength": 1}
+        "generator": {"type": "string", "minLength": 1},
+        "generator_type": {"enum": ["programmatic", "llm_or_agent", "human"]}
       }
     }
   }

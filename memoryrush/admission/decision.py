@@ -131,6 +131,8 @@ def evaluate_admission(
                 "solver returned inconsistent sufficiency for selected evidence spans"
             )
     decision, reason_codes = policy.decide(matrix, solutions)
+    if decision is AdmissionDecision.ADMIT and not solutions:
+        raise ValueError("policy admitted without sufficient evidence")
 
     if solutions:
         selected = solutions[0].selected_span_ids

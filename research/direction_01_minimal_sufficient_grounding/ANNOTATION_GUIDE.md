@@ -67,7 +67,9 @@ Record annotators independently before discussion. Preserve initial labels, rati
 - `llm_generated`: proposed by an LLM/agent; always provisional until independently reviewed.
 - `human`: supplied by a named human annotation process.
 
-The allowed source/status pairs are `programmatic_oracle/synthetic_oracle`, `llm_generated/provisional`, and `human/{provisional,human_gold}`. An LLM/agent-generated label must never use `human_gold`. Synthetic oracle labels are not a substitute for natural human-labeled data.
+The allowed source/status pairs are `programmatic_oracle/synthetic_oracle`, `llm_generated/provisional`, and `human/{provisional,human_gold}`. Provenance separately records `generator_type` as `programmatic`, `llm_or_agent`, or `human`; it must agree with the label source. An LLM/agent-generated label must never use `human_gold`. Synthetic oracle labels are not a substitute for natural human-labeled data.
+
+A controlled counterfactual must record both a valid `base_case_id` and an allow-listed `perturbation_operator`. Neither field may appear alone, and the referenced base case must be present in the same frozen JSONL file.
 
 ## Minimal Examples
 

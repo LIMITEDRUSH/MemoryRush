@@ -63,7 +63,12 @@ def replace_qualifier(
         if not has_matching_slot:
             atomic_claims.append(claim)
             continue
-        perturbed_claim_text = _replace_declared_phrase(claim.text, before, after)
+        if re.search(rf"(?<!\w){re.escape(before)}(?!\w)", claim.text):
+            perturbed_claim_text = _replace_declared_phrase(claim.text, before, after)
+        else:
+            # Some self-sufficient atomic claims intentionally keep an attribution
+            # qualifier as structured context instead of duplicating it in claim text.
+            perturbed_claim_text = claim.text
         qualifiers = tuple(
             QualifierSlot(kind=slot.kind, value=after)
             if slot.kind is kind and slot.value == before
