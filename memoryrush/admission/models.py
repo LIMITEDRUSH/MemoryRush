@@ -63,6 +63,10 @@ class ClaimFormAudit:
     auditor_version: str
 
     def __post_init__(self) -> None:
+        if not isinstance(self.self_sufficiency, ClaimFormStatus):
+            raise TypeError("claim-form self_sufficiency must be a ClaimFormStatus")
+        if not isinstance(self.minimality, ClaimFormStatus):
+            raise TypeError("claim-form minimality must be a ClaimFormStatus")
         _require_text(self.auditor_name, "claim-form auditor name")
         _require_text(self.auditor_version, "claim-form auditor version")
         if any(not reason.strip() for reason in self.reason_codes):
@@ -75,6 +79,8 @@ class QualifierSlot:
     value: str
 
     def __post_init__(self) -> None:
+        if not isinstance(self.kind, QualifierKind):
+            raise TypeError("qualifier kind must be a QualifierKind")
         _require_text(self.value, "qualifier value")
 
 
@@ -149,6 +155,8 @@ class SupportCell:
     def __post_init__(self) -> None:
         _require_text(self.claim_id, "claim_id")
         _require_text(self.span_id, "span_id")
+        if not isinstance(self.label, SupportLabel):
+            raise TypeError("support label must be a SupportLabel")
         if len(self.supported_qualifiers) != len(set(self.supported_qualifiers)):
             raise ValueError("supported qualifiers must not contain duplicates")
         normalized_parts = [part.strip().casefold() for part in self.supported_claim_parts]

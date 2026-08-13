@@ -395,3 +395,24 @@ def test_policy_cannot_admit_without_a_sufficient_evidence_solution() -> None:
             policy=FailOpenPolicy(),
             claim_form_audit=_passing_claim_form_audit(),
         )
+
+
+def test_policy_must_return_typed_decision_and_reason_codes() -> None:
+    class RawStringPolicy:
+        policy_name = "raw-string-test-policy"
+
+        def decide(self, matrix, solutions):
+            return "ADMIT", ["not-a-tuple"]
+
+    with pytest.raises(TypeError, match="typed AdmissionDecision"):
+        evaluate_admission(
+            candidate=_candidate(),
+            evidence_spans=(_span(),),
+            verifier=MatrixVerifier(
+                SupportLabel.SUPPORTS,
+                supported_qualifiers=(QualifierSlot(QualifierKind.MODALITY, "may"),),
+            ),
+            solver=InclusionMinimalSolver(),
+            policy=RawStringPolicy(),
+            claim_form_audit=_passing_claim_form_audit(),
+        )

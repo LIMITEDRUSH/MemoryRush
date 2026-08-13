@@ -131,6 +131,12 @@ def evaluate_admission(
                 "solver returned inconsistent sufficiency for selected evidence spans"
             )
     decision, reason_codes = policy.decide(matrix, solutions)
+    if not isinstance(decision, AdmissionDecision):
+        raise TypeError("policy must return a typed AdmissionDecision")
+    if not isinstance(reason_codes, tuple) or any(
+        not isinstance(reason, str) or not reason.strip() for reason in reason_codes
+    ):
+        raise TypeError("policy reason codes must be a tuple of non-empty strings")
     if decision is AdmissionDecision.ADMIT and not solutions:
         raise ValueError("policy admitted without sufficient evidence")
 

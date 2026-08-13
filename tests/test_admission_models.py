@@ -4,9 +4,12 @@ from memoryrush.admission import (
     AdmissionDecision,
     AtomicClaim,
     CandidateClaim,
+    ClaimFormAudit,
+    ClaimFormStatus,
     EvidenceSpan,
     QualifierKind,
     QualifierSlot,
+    SupportCell,
     SupportLabel,
     SupportMatrix,
 )
@@ -71,3 +74,19 @@ def test_admission_decision_values_are_stable() -> None:
     ]
     assert SupportLabel.SUPPORTS.value == "supports"
 
+
+def test_runtime_contracts_reject_raw_strings_for_enum_fields() -> None:
+    with pytest.raises(TypeError, match="claim-form self_sufficiency"):
+        ClaimFormAudit(
+            self_sufficiency="FAIL",  # type: ignore[arg-type]
+            minimality=ClaimFormStatus.PASS,
+            reason_codes=("fixture",),
+            auditor_name="fixture",
+            auditor_version="v1",
+        )
+
+    with pytest.raises(TypeError, match="qualifier kind"):
+        QualifierSlot(kind="entity", value="Alice")  # type: ignore[arg-type]
+
+    with pytest.raises(TypeError, match="support label"):
+        SupportCell("claim", "span", "supports")  # type: ignore[arg-type]
