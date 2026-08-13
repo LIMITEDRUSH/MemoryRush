@@ -84,7 +84,9 @@ For the support-cell interpretation, `MSG-C006` and `MSG-C020` have expected lab
 
 The prediction unit is one unique `(case, method, schedule_seed)` attempt. The relation table is a paired diagnostic over predictions, not a new collection of independent cases. Schedule seeds `29` and `47` are repeated measurements of the same 36 cases, not extra sample size.
 
-For each schedule seed, source blocks are deterministically permuted by `SHA256(schedule_seed | block_id)`, then cases inside each block by `SHA256(schedule_seed | block_id | opaque_case_id)`. The exact schedule is persisted before inference. Atomic and holistic call order is balanced by a precomputed hash rule so neither method is always the cold-start call. Evidence order uses the same schedule-seed-derived permutation for both methods while retaining an outer map to original span IDs.
+Before building a run, the outer orchestration generates a fresh 32-byte namespace nonce and records only its lowercase 64-hex representation in the inaccessible outer mapping. Opaque case IDs are the first 12 hexadecimal characters of `HMAC-SHA256(key=namespace_nonce_bytes, message=UTF8("case\0" + original_case_id))`. The inference-only manifest contains neither the namespace nor the original ID. Reusing a namespace across run IDs is forbidden; fixed nonces are allowed only in tests and unscored deterministic plumbing artifacts.
+
+For each schedule seed, source blocks are deterministically permuted by ascending `SHA256(UTF8(schedule_seed + "|" + block_id))`, then cases inside each block by ascending `SHA256(UTF8(schedule_seed + "|" + block_id + "|" + opaque_case_id))`. Evidence is ordered by ascending `SHA256(UTF8(schedule_seed + "|" + opaque_case_id + "|" + opaque_span_id))`. Atomic-versus-holistic first-role balance is fixed independently of schedule position: sort all cases by `SHA256(UTF8(schedule_seed + "|role|" + opaque_case_id))`; the first half are atomic-first and the remaining half holistic-first (for the frozen 36 cases, exactly 18/18). Ties, though cryptographically negligible, are broken by the corresponding literal ID. The exact schedule is persisted before inference, and both support roles consume the same evidence order.
 
 No prompt, threshold, failure policy, relationship, case text, or model decoding option may change between schedules. The Ollama decoding seed remains exactly `17` in every request; only the precomputed source-block, case, role, and evidence order changes with schedule seeds `17`, `29`, and `47`. Schedule `17` is collected and sealed first. Schedules `29` and `47` run only if schedule 17 is structurally valid; continuation is based on integrity checks, never on whether results look favorable. Sensitivity schedules cannot fill in, replace, or average away a failed primary attempt. This separation makes observed changes an order/backend-repeatability diagnostic rather than a confounded decoding-seed-plus-order effect.
 
@@ -125,11 +127,12 @@ Candidate and evidence strings are untrusted data. The request builder must:
 4. pass adversarial strings containing instruction overrides, delimiter text, JSON fragments, and requested labels through offline and unscored canary tests;
 5. treat canary success only as a control check, not as a security proof.
 
-No silent truncation is allowed. Before transport, the exact rendered request must fit a conservative committed UTF-8 byte cap that leaves at least 2,048 tokens of context headroom. The v0.1 cap is frozen at `4,096` UTF-8 bytes for the complete system-plus-user prompt; the preflight must prove every frozen request fits or stop before the first scored call. After transport, `prompt_eval_count`, `eval_count`, `done`, and `done_reason` are validated. An exceeded cap stops before transport. Returned `done != true`, `done_reason != stop`, or any suspected truncation is a run-global completion-integrity failure: retain the raw return, immediately mark the schedule run `INTERRUPTED/INVALID_RUN`, and do not score any prediction from that run. It is never converted to an attempt-local `REVIEW` and is not retried with a shorter input.
+No silent truncation is allowed. Before transport or `PREPARED` persistence, the exact rendered request must fit a conservative committed UTF-8 byte cap that leaves at least 2,048 tokens of context headroom. The v0.1 cap is frozen at `4,096` UTF-8 bytes for the complete system-plus-user prompt (the separate Ollama structured-output JSON Schema is recorded and bounded independently, not counted as prompt bytes); every renderer enforces the byte cap and the preflight proves every frozen request fits or stops before the first scored call. Character counts are not substitutes for UTF-8 byte counts. After transport, `prompt_eval_count`, `eval_count`, `done`, and `done_reason` are validated. An exceeded cap stops before transport. Returned `done != true`, `done_reason != stop`, or any suspected truncation is a run-global completion-integrity failure: retain the raw return, immediately mark the schedule run `INTERRUPTED/INVALID_RUN`, and do not score any prediction from that run. It is never converted to an attempt-local `REVIEW` and is not retried with a shorter input.
 
 ## 8. Shared claim-form audit
 
 Prompt/schema name to implement and commit: `claim_form_v0_1`.
+Physical-call method name: `shared_claim_form_v0`.
 
 One structured call per unique `(case, schedule_seed)` returns only:
 
@@ -223,11 +226,13 @@ No relationship outcome changes either member's prediction. This prevents the re
 
 ## 13. Raw artifact and failure retention
 
-Every request uses two-phase append-only persistence. Before transport, an immutable `PREPARED` record containing the canonical request, hashes, schedule position, and start time is written via temporary file, flush/fsync, atomic rename, and byte-hash verification. Immediately after return or exception, and **before** response parsing, scoring, or the next call, a separate immutable `RETURNED` or `TRANSPORT_FAILED` record is durably written and linked to `PREPARED`. A process crash can therefore leave a visible incomplete attempt rather than erase it. Absence of an Ollama envelope is explicit rather than fabricated.
+Every request uses two-phase append-only persistence. Before transport, an immutable `PREPARED` record containing the canonical request, hashes, schedule position, and start time is written through a same-filesystem temporary file, flush/fsync, atomic no-replace publication, and byte-hash verification. Immediately after return or exception, and **before** response parsing, scoring, or the next call, a separate immutable `RETURNED` or `TRANSPORT_FAILED` record is durably written and linked to `PREPARED`. A process crash can therefore leave a visible incomplete attempt rather than erase it. Absence of an Ollama envelope is explicit rather than fabricated.
+
+Publication is no-replace even against a non-cooperating writer: the implementation may use a same-filesystem temporary file followed by an atomic hard-link-if-absent (and then unlink the temporary file), but it must never use a replace/rename primitive that can overwrite an existing immutable record. If the platform cannot provide the committed no-replace primitive, preflight fails closed before inference.
 
 Each case artifact records at least:
 
-- experiment/run/attempt ID, run class, method/prompt role, fixed decoding seed, schedule seed, opaque and outer case IDs;
+- experiment/run/attempt ID, run class, method/prompt role, fixed decoding seed, schedule seed, and opaque case ID. Raw inference-process attempt records must not contain the outer/original case ID; the sealed outer evaluator joins it only after predictions are complete;
 - timezone-aware start/end timestamps and monotonic wall duration;
 - clean Git HEAD/dirty flag;
 - benchmark, inference-manifest, schedule, prompt-template, full rendered prompt, response-schema, canonical request, and, when present, raw-envelope and raw-response SHA-256 values;
@@ -239,6 +244,8 @@ Each case artifact records at least:
 - exit code, exception type/message, and failure reason without discarding partial output.
 
 No automatic retry is allowed in the primary artifact. A retry is a new attempt/run ID and cannot replace the failure. Parsed predictions and evaluation summaries are derived only after the raw manifest proves that every attempted request has a retained artifact.
+
+The raw-attempt contract itself enforces, both at construction and recovery, `run_class in {DEBUGGING, EXPLORATORY}`, `prompt_role in {claim_form, atomic_support, holistic_support}`, decoding seed exactly `17`, schedule seed in `{17,29,47}`, and opaque case IDs matching `case_[0-9a-f]{12}`. It also binds the PREPARED metadata to a closed canonical Ollama request, the physical-call method assigned to each role, the exact committed role response schema, model/options/endpoint, and the complete prompt byte cap; it recursively rejects original benchmark IDs and reserved oracle/provenance keys outside the untrusted prompt data string. A self-consistent record with a forbidden raw/original ID, schema drift, or enum-like string is an integrity failure rather than accepted provenance.
 
 The attempt-to-run state machine is frozen as follows; the first matching row controls, so an event cannot be both scored as `REVIEW` and invalidate the run:
 
@@ -365,15 +372,16 @@ Isolated failures below the systemic-stop threshold remain in the all-case denom
 
 ## 19. Current capability check
 
-As of drafting, the repository has an offline-tested `OllamaSemanticVerifier` for one `semantic_support_v0_1` structured atomic-matrix request. It records prompt/request hashes, raw response/envelope, Ollama usage fields, and rejects model mismatch, incomplete completion, malformed/partial matrices, invented slots, oversized serialized input, and several type errors. The existing prompt explicitly treats claim/evidence text as untrusted data.
+As of this pre-run revision, the repository has offline-tested, locally implemented contracts for all three structured roles: atomic support (`semantic_support_v0_1`), claim form (`claim_form_v0_1`), and holistic support (`holistic_support_v0_1`). The renderers treat candidate/evidence text as untrusted data and enforce the complete system-plus-user prompt cap at 4,096 UTF-8 bytes. The atomic adapter records prompt/request hashes, raw response/envelope, Ollama usage fields, and rejects model mismatch, incomplete completion, malformed/partial matrices, invented slots, and type errors. The claim-form and holistic contracts have strict parsers and exact response schemas, but are not yet connected to live transport.
+
+The repository also has locally implemented and offline-tested inference-manifest, outer-mapping, three-seed schedule, and append-only PREPARED/terminal attempt contracts. The inference manifest uses run-local HMAC case IDs and excludes the namespace/original identifiers; the schedule tests independently recompute the frozen block/case/evidence/role formulas for seeds 17, 29, and 47. Attempt publication uses a same-filesystem hard-link-if-absent primitive and fails closed rather than overwriting an immutable record. These changes are not model results.
 
 This is **not yet sufficient to run this protocol**:
 
 - the newly locked benchmark hash and byte size still require a clean preflight recomputation immediately before the first model call;
 - the relationship gate must pass its complete adversarial test suite on the exact frozen bytes;
-- claim-form and holistic prompts/adapters do not yet exist;
-- no semantic experiment runner yet guarantees opaque inference-only input, balanced schedule, immediate per-case failure persistence, or the artifact fields above;
-- the existing character cap is not by itself the full conservative rendered-prompt/context proof required here;
+- no inference-only semantic experiment runner yet connects the three role contracts to transport, proves process-level oracle isolation, applies the state machine, or emits the complete run manifest;
+- the manifest, attempt store, and judge contracts must be committed and pushed from a clean tested checkpoint before any canary or benchmark call;
 - model digest, Ollama version, hardware snapshot, `num_predict`, and per-attempt durable failure records are not all enforced by the current adapter.
 
 Accordingly, this file is a design artifact only. It contains no model result and cannot be cited as evidence that any method works.
