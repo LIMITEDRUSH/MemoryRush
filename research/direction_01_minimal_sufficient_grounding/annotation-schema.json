@@ -24,10 +24,12 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["paragraph_id", "text"],
+            "required": ["paragraph_id", "text", "snapshot_start", "snapshot_end"],
             "properties": {
               "paragraph_id": {"type": "string", "minLength": 1},
-              "text": {"type": "string", "minLength": 1}
+              "text": {"type": "string", "minLength": 1},
+              "snapshot_start": {"type": "integer", "minimum": 0},
+              "snapshot_end": {"type": "integer", "minimum": 1}
             }
           }
         }
@@ -46,7 +48,7 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["claim_id", "text", "qualifiers"],
+            "required": ["claim_id", "text", "qualifiers", "required_support_parts"],
             "properties": {
               "claim_id": {"type": "string", "minLength": 1},
               "text": {"type": "string", "minLength": 1},
@@ -61,6 +63,11 @@
                     "value": {"type": "string", "minLength": 1}
                   }
                 }
+              },
+              "required_support_parts": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {"type": "string", "minLength": 1}
               }
             }
           }
@@ -93,7 +100,27 @@
         "minimal_evidence_sets": {"type": "array", "items": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}},
         "label_source": {"enum": ["programmatic_oracle", "human", "llm_generated"]},
         "adjudication_status": {"enum": ["synthetic_oracle", "provisional", "human_gold"]}
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "label_source": {"const": "programmatic_oracle"},
+            "adjudication_status": {"const": "synthetic_oracle"}
+          }
+        },
+        {
+          "properties": {
+            "label_source": {"const": "llm_generated"},
+            "adjudication_status": {"const": "provisional"}
+          }
+        },
+        {
+          "properties": {
+            "label_source": {"const": "human"},
+            "adjudication_status": {"enum": ["provisional", "human_gold"]}
+          }
+        }
+      ]
     },
     "provenance": {
       "type": "object",
@@ -108,4 +135,3 @@
     }
   }
 }
-

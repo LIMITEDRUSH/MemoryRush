@@ -25,6 +25,12 @@ from memoryrush.admission.models import (
 SUPPORTED_SCHEMA_VERSION = "direction1.synthetic_oracle.v0.1"
 LABEL_SOURCES = {"programmatic_oracle", "human", "llm_generated"}
 ADJUDICATION_STATUSES = {"synthetic_oracle", "provisional", "human_gold"}
+ALLOWED_LABEL_STATUS_PAIRS = {
+    ("programmatic_oracle", "synthetic_oracle"),
+    ("llm_generated", "provisional"),
+    ("human", "provisional"),
+    ("human", "human_gold"),
+}
 
 
 def _require_mapping(value: Any, field_name: str) -> dict[str, Any]:
@@ -51,10 +57,22 @@ def _require_int(value: Any, field_name: str) -> int:
     return value
 
 
+def _reject_unknown_fields(
+    payload: dict[str, Any], allowed: set[str], field_name: str
+) -> None:
+    unknown = set(payload) - allowed
+    if unknown:
+        raise ValueError(
+            f"{field_name} has unknown fields: {', '.join(sorted(unknown))}"
+        )
+
+
 @dataclass(frozen=True)
 class BenchmarkParagraph:
     paragraph_id: str
     text: str
+    snapshot_start: int
+    snapshot_end: int
 
 
 @dataclass(frozen=True)
@@ -99,6 +117,20 @@ def parse_benchmark_case(payload: dict[str, Any]) -> BenchmarkCase:
     """Parse and cross-validate one JSON-compatible benchmark payload."""
 
     root = _require_mapping(payload, "case")
+    _reject_unknown_fields(
+        root,
+        {
+            "schema_version",
+            "case_id",
+            "case_family",
+            "document",
+            "candidate",
+            "evidence_spans",
+            "oracle",
+            "provenance",
+        },
+        "case",
+    )
     schema_version = _require_text(root.get("schema_version"), "schema_version")
     if schema_version != SUPPORTED_SCHEMA_VERSION:
         raise ValueError(f"unsupported schema_version: {schema_version}")
@@ -151,6 +183,11 @@ def load_benchmark(path: str | Path) -> tuple[BenchmarkCase, ...]:
 
 
 def _parse_document(payload: dict[str, Any]) -> BenchmarkDocument:
+    _reject_unknown_fields(
+        payload,
+        {"document_id", "title", "snapshot_text", "source_sha256", "paragraphs"},
+        "document",
+    )
     document_id = _require_text(payload.get("document_id"), "document.document_id")
     title = _require_text(payload.get("title"), "document.title")
     snapshot = _require_text(payload.get("snapshot_text"), "document.snapshot_text")
@@ -163,16 +200,43 @@ def _parse_document(payload: dict[str, Any]) -> BenchmarkDocument:
 
     paragraphs: list[BenchmarkParagraph] = []
     seen_ids: set[str] = set()
+    previous_end = 0
     for index, raw in enumerate(_require_list(payload.get("paragraphs"), "document.paragraphs")):
         item = _require_mapping(raw, f"document.paragraphs[{index}]")
+        _reject_unknown_fields(
+            item,
+            {"paragraph_id", "text", "snapshot_start", "snapshot_end"},
+            f"document.paragraphs[{index}]",
+        )
         paragraph_id = _require_text(item.get("paragraph_id"), "paragraph_id")
         text = _require_text(item.get("text"), "paragraph text")
+        snapshot_start = _require_int(item.get("snapshot_start"), "snapshot_start")
+        snapshot_end = _require_int(item.get("snapshot_end"), "snapshot_end")
         if paragraph_id in seen_ids:
             raise ValueError(f"duplicate paragraph_id: {paragraph_id}")
-        if text not in snapshot:
-            raise ValueError(f"paragraph {paragraph_id} is not present in the frozen snapshot")
+        if (
+            snapshot_start < previous_end
+            or snapshot_end <= snapshot_start
+            or snapshot_end > len(snapshot)
+        ):
+            raise ValueError(
+                "document paragraph offsets must be ordered, non-overlapping, "
+                "and inside the frozen snapshot"
+            )
+        if snapshot[snapshot_start:snapshot_end] != text:
+            raise ValueError(
+                f"paragraph {paragraph_id} does not match its frozen snapshot offsets"
+            )
         seen_ids.add(paragraph_id)
-        paragraphs.append(BenchmarkParagraph(paragraph_id=paragraph_id, text=text))
+        paragraphs.append(
+            BenchmarkParagraph(
+                paragraph_id=paragraph_id,
+                text=text,
+                snapshot_start=snapshot_start,
+                snapshot_end=snapshot_end,
+            )
+        )
+        previous_end = snapshot_end
     if not paragraphs:
         raise ValueError("document must contain at least one paragraph")
     return BenchmarkDocument(
@@ -185,16 +249,27 @@ def _parse_document(payload: dict[str, Any]) -> BenchmarkDocument:
 
 
 def _parse_candidate(payload: dict[str, Any]) -> CandidateClaim:
+    _reject_unknown_fields(
+        payload, {"candidate_id", "proposition", "atomic_claims"}, "candidate"
+    )
     atomic_claims: list[AtomicClaim] = []
     for claim_index, raw_claim in enumerate(
         _require_list(payload.get("atomic_claims"), "candidate.atomic_claims")
     ):
         claim = _require_mapping(raw_claim, f"candidate.atomic_claims[{claim_index}]")
+        _reject_unknown_fields(
+            claim,
+            {"claim_id", "text", "qualifiers", "required_support_parts"},
+            f"candidate.atomic_claims[{claim_index}]",
+        )
         qualifiers: list[QualifierSlot] = []
         for slot_index, raw_slot in enumerate(
             _require_list(claim.get("qualifiers", []), "atomic claim qualifiers")
         ):
             slot = _require_mapping(raw_slot, f"qualifiers[{slot_index}]")
+            _reject_unknown_fields(
+                slot, {"kind", "value"}, f"qualifiers[{slot_index}]"
+            )
             try:
                 kind = QualifierKind(_require_text(slot.get("kind"), "qualifier kind"))
             except ValueError as exc:
@@ -207,6 +282,13 @@ def _parse_candidate(payload: dict[str, Any]) -> CandidateClaim:
                 claim_id=_require_text(claim.get("claim_id"), "claim_id"),
                 text=_require_text(claim.get("text"), "atomic claim text"),
                 qualifiers=tuple(qualifiers),
+                required_support_parts=tuple(
+                    _require_text(part, "required support part")
+                    for part in _require_list(
+                        claim.get("required_support_parts", []),
+                        "atomic claim required_support_parts",
+                    )
+                ),
             )
         )
     return CandidateClaim(
@@ -224,6 +306,11 @@ def _parse_evidence_spans(
     seen_ids: set[str] = set()
     for index, raw in enumerate(payload):
         item = _require_mapping(raw, f"evidence_spans[{index}]")
+        _reject_unknown_fields(
+            item,
+            {"span_id", "paragraph_id", "start_char", "end_char", "text"},
+            f"evidence_spans[{index}]",
+        )
         span_id = _require_text(item.get("span_id"), "span_id")
         paragraph_id = _require_text(item.get("paragraph_id"), "paragraph_id")
         text = _require_text(item.get("text"), "evidence span text")
@@ -258,6 +345,17 @@ def _parse_evidence_spans(
 def _parse_oracle(
     payload: dict[str, Any], evidence_spans: tuple[EvidenceSpan, ...]
 ) -> OracleAnnotation:
+    _reject_unknown_fields(
+        payload,
+        {
+            "decision",
+            "reason_codes",
+            "minimal_evidence_sets",
+            "label_source",
+            "adjudication_status",
+        },
+        "oracle",
+    )
     try:
         decision = AdmissionDecision(_require_text(payload.get("decision"), "oracle.decision"))
     except ValueError as exc:
@@ -274,8 +372,13 @@ def _parse_oracle(
         raise ValueError(f"unsupported oracle label_source: {label_source}")
     if adjudication_status not in ADJUDICATION_STATUSES:
         raise ValueError(f"unsupported adjudication_status: {adjudication_status}")
-    if label_source == "llm_generated" and adjudication_status == "human_gold":
-        raise ValueError("LLM-generated label cannot claim human_gold adjudication")
+    if (label_source, adjudication_status) not in ALLOWED_LABEL_STATUS_PAIRS:
+        if label_source == "llm_generated" and adjudication_status == "human_gold":
+            raise ValueError("LLM-generated label cannot claim human_gold adjudication")
+        raise ValueError(
+            "unsupported label_source/adjudication_status combination: "
+            f"{label_source}/{adjudication_status}"
+        )
 
     known_span_ids = {span.span_id for span in evidence_spans}
     minimal_sets: list[tuple[str, ...]] = []
@@ -306,6 +409,11 @@ def _parse_oracle(
 def _parse_provenance(
     payload: dict[str, Any], oracle: OracleAnnotation
 ) -> CaseProvenance:
+    _reject_unknown_fields(
+        payload,
+        {"construction", "base_case_id", "perturbation_operator", "generator"},
+        "provenance",
+    )
     construction = _require_text(payload.get("construction"), "provenance.construction")
     generator = _require_text(payload.get("generator"), "provenance.generator")
     base_case_id = payload.get("base_case_id")
@@ -322,4 +430,3 @@ def _parse_provenance(
         perturbation_operator=perturbation_operator,
         generator=generator,
     )
-

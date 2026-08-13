@@ -19,7 +19,14 @@ def _payload() -> dict:
             "title": "Synthetic trial",
             "snapshot_text": document_snapshot,
             "source_sha256": source_hash,
-            "paragraphs": [{"paragraph_id": "p_001", "text": paragraph}],
+            "paragraphs": [
+                {
+                    "paragraph_id": "p_001",
+                    "text": paragraph,
+                    "snapshot_start": 0,
+                    "snapshot_end": len(paragraph),
+                }
+            ],
         },
         "candidate": {
             "candidate_id": "candidate-001",
@@ -34,6 +41,7 @@ def _payload() -> dict:
                         {"kind": "time", "value": "2025"},
                         {"kind": "condition", "value": "under stable funding"},
                     ],
+                    "required_support_parts": [],
                 }
             ],
         },
@@ -68,6 +76,7 @@ def test_parse_valid_case_resolves_candidate_and_span() -> None:
     assert case.case_id == "case-001"
     assert case.candidate.atomic_claims[0].qualifiers[1].value == "may"
     assert case.evidence_spans[0].text.startswith("The 120-person")
+    assert case.document.paragraphs[0].snapshot_start == 0
     assert case.oracle.minimal_evidence_sets == (("span-001",),)
 
 
@@ -100,6 +109,69 @@ def test_llm_generated_label_cannot_claim_human_adjudication() -> None:
         parse_benchmark_case(payload)
 
 
+@pytest.mark.parametrize(
+    ("label_source", "adjudication_status"),
+    [
+        ("programmatic_oracle", "provisional"),
+        ("programmatic_oracle", "human_gold"),
+        ("llm_generated", "synthetic_oracle"),
+        ("human", "synthetic_oracle"),
+    ],
+)
+def test_label_source_and_adjudication_combinations_are_truthful(
+    label_source: str,
+    adjudication_status: str,
+) -> None:
+    payload = _payload()
+    payload["oracle"]["label_source"] = label_source
+    payload["oracle"]["adjudication_status"] = adjudication_status
+
+    with pytest.raises(ValueError, match="label_source/adjudication_status"):
+        parse_benchmark_case(payload)
+
+
+@pytest.mark.parametrize(
+    "object_path",
+    [
+        (),
+        ("document",),
+        ("document", "paragraphs", 0),
+        ("candidate",),
+        ("candidate", "atomic_claims", 0),
+        ("candidate", "atomic_claims", 0, "qualifiers", 0),
+        ("evidence_spans", 0),
+        ("oracle",),
+        ("provenance",),
+    ],
+)
+def test_unknown_fields_are_rejected_at_every_schema_level(object_path: tuple) -> None:
+    payload = _payload()
+    target = payload
+    for component in object_path:
+        target = target[component]
+    target["unexpected"] = "must fail closed"
+
+    with pytest.raises(ValueError, match="unknown fields.*unexpected"):
+        parse_benchmark_case(payload)
+
+
+def test_repeated_paragraph_text_requires_distinct_ordered_snapshot_offsets() -> None:
+    payload = _payload()
+    snapshot = "A. A."
+    payload["document"]["snapshot_text"] = snapshot
+    payload["document"]["source_sha256"] = sha256(snapshot.encode("utf-8")).hexdigest()
+    payload["document"]["paragraphs"] = [
+        {"paragraph_id": "p_001", "text": "A.", "snapshot_start": 0, "snapshot_end": 2},
+        {"paragraph_id": "p_002", "text": "A.", "snapshot_start": 0, "snapshot_end": 2},
+    ]
+    payload["evidence_spans"][0].update(
+        {"paragraph_id": "p_002", "text": "A.", "start_char": 0, "end_char": 2}
+    )
+
+    with pytest.raises(ValueError, match="ordered, non-overlapping"):
+        parse_benchmark_case(payload)
+
+
 def test_load_benchmark_rejects_duplicate_case_ids(tmp_path) -> None:
     path = tmp_path / "benchmark.jsonl"
     serialized = json.dumps(_payload())
@@ -115,4 +187,3 @@ def test_admit_case_requires_an_oracle_minimal_evidence_set() -> None:
 
     with pytest.raises(ValueError, match="ADMIT oracle"):
         parse_benchmark_case(payload)
-

@@ -10,6 +10,8 @@ Annotate only whether a candidate proposition is supported by a frozen source sn
 
 Each case contains a frozen document, one candidate proposition, provisional atomic claims and qualifier slots, localized evidence spans, provenance and an admission label. Inspect the full candidate and all provided evidence before labeling.
 
+Every paragraph records ordered, non-overlapping `snapshot_start` / `snapshot_end` offsets into the frozen document. Evidence offsets remain paragraph-local. This two-level coordinate system prevents repeated paragraph text from being silently mapped to the wrong occurrence.
+
 ## Support Labels
 
 - `fully_supported`: every atomic requirement and declared qualifier is directly or compositionally supported.
@@ -65,7 +67,7 @@ Record annotators independently before discussion. Preserve initial labels, rati
 - `llm_generated`: proposed by an LLM/agent; always provisional until independently reviewed.
 - `human`: supplied by a named human annotation process.
 
-An LLM/agent-generated label must never use `human_gold`. Synthetic cases use `synthetic_oracle`, which is not a substitute for natural human-labeled data.
+The allowed source/status pairs are `programmatic_oracle/synthetic_oracle`, `llm_generated/provisional`, and `human/{provisional,human_gold}`. An LLM/agent-generated label must never use `human_gold`. Synthetic oracle labels are not a substitute for natural human-labeled data.
 
 ## Minimal Examples
 
@@ -90,4 +92,3 @@ Before accepting an annotation record:
 5. provenance and adjudication status are truthful;
 6. rationale distinguishes evidence absence, contradiction and ambiguity;
 7. no private or copyrighted full-text material has been introduced.
-
