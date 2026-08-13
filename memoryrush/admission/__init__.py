@@ -1,5 +1,11 @@
 """Provisional, replaceable write-time admission research framework."""
 
+from memoryrush.admission.decision import (
+    AdmissionResult,
+    ConservativeDecisionPolicy,
+    DecisionPolicy,
+    evaluate_admission,
+)
 from memoryrush.admission.models import (
     AdmissionDecision,
     AtomicClaim,
@@ -12,6 +18,7 @@ from memoryrush.admission.models import (
     SupportMatrix,
 )
 from memoryrush.admission.protocols import Verifier
+from memoryrush.admission.perturbations import CandidatePerturbation, replace_qualifier
 from memoryrush.admission.solver import (
     DeletionAudit,
     DeletionTrial,
@@ -26,10 +33,14 @@ from memoryrush.admission.solver import (
 
 __all__ = [
     "AdmissionDecision",
+    "AdmissionResult",
     "AtomicClaim",
     "CandidateClaim",
+    "CandidatePerturbation",
+    "ConservativeDecisionPolicy",
     "DeletionAudit",
     "DeletionTrial",
+    "DecisionPolicy",
     "EvidenceSpan",
     "EvidenceSetSolver",
     "EvidenceSolution",
@@ -43,5 +54,7 @@ __all__ = [
     "SufficiencyResult",
     "Verifier",
     "audit_evidence_deletions",
+    "evaluate_admission",
     "evaluate_sufficiency",
+    "replace_qualifier",
 ]
