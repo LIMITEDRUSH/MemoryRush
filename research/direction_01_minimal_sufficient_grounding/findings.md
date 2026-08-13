@@ -6,17 +6,19 @@
 
 ## Current Understanding
 
-尚未形成实验结论。项目既有事实源明确承认：当前 validator 只验证结构、paragraph ID 存在性和部分 exact quote，不能证明每个 MemoryUnit 的完整语义受到证据支持。这是待复现的项目事实，不是方法有效性的证据。
+尚未形成方法有效性结论。本轮已用公开安全的合成句复现：当前 validator 会把引用真实 paragraph ID、但把 `may` 强化成 `always` 的 MemoryUnit 判为 valid。该结果是 `DEBUGGING` 级基线证据，只证明现有结构检查存在语义盲点，不证明 proposed method 有效。
 
 ## Key Results
 
-无。`NO_EXPERIMENT_RUN_YET`。
+- `run-debug-001`：现有 ID-only MemoryUnit validation 接受 modality strengthening；见 `CURRENT_RESULTS.md` 与回归测试。
+- 环境基线：合规 Python 3.13.14 环境下，变更前 `15 passed`；首个 contracts 切片后 `20 passed`。
 
 ## Patterns and Insights
 
 - 当前方向的可证伪优势来自“写入前阻止 unsupported semantic strengthening”，而不是更强检索或更大模型。
 - 任何风险改善都必须在匹配 coverage/计算和固定下游条件下解释，否则会退化为“拒绝更多所以错误更少”。
 - exact quote 只证明字符串来自原文，不能自动证明候选命题的组合语义、作用域和模态忠实。
+- 当前回归例说明 paragraph-ID validity 与 semantic support 是两个不同 estimand；后续 baseline 报告不得混称。
 
 ## Lessons and Constraints
 
@@ -33,5 +35,4 @@
 
 ## Evidence Status
 
-`NOT_YET_TESTABLE`（截至初始化；协议、基线和运行尚未完成）。
-
+`NOT_YET_TESTABLE`（协议与一个 DEBUGGING 基线已完成；joint solver/verifier 和 confirmatory run 尚未完成）。

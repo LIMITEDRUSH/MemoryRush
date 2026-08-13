@@ -5,7 +5,7 @@ project:
   completion_status: INCOMPLETE
   started_at: "2026-08-14T02:43:37+08:00"
   minimum_work_until: "2026-08-14T12:43:37+08:00"
-  current_phase: "phase_0_baseline_and_protection"
+  current_phase: "phase_0_audit_plus_phase_3_contract_slice"
   locked_core_path: "DIRECTION_CHARTER.md"
 
 git:
@@ -21,6 +21,11 @@ completed:
   - "Recorded branch, HEAD, status, diffs, untracked/ignored manifests"
   - "Scanned committable files for common secret patterns and large files"
   - "Created and pushed pre-research checkpoint containing only pre-existing dirty state"
+  - "Created compliant isolated Python 3.13.14 research environment"
+  - "Verified pre-change suite: 15 tests passed; compile, CLI and fake smoke passed"
+  - "Locked pilot protocol in commit 08d9387 before Direction 1 results"
+  - "Reproduced current validator modality-strengthening false positive as DEBUGGING evidence"
+  - "Completed first TDD contract slice; full suite now 20 tests passed"
 
 hypotheses:
   - id: H1
@@ -37,15 +42,21 @@ hypotheses:
     statement: "Lower false admission propagates to fewer unsupported answers under frozen downstream retrieval and answer conditions."
 
 experiments:
-  protocol_locked: false
+  protocol_locked: true
+  protocol_commit: "08d9387"
   primary_measure_family: "risk_coverage_and_matched_coverage"
   baseline_value: null
-  total_runs: 0
+  total_runs: 1
   confirmatory_runs: 0
   exploratory_runs: 0
-  debugging_runs: 0
+  debugging_runs: 1
   invalid_runs: 0
-  trajectory: []
+  trajectory:
+    - run_id: "run-debug-001"
+      class: "DEBUGGING"
+      hypothesis: "baseline semantic blind spot"
+      result: "ID-only MemoryUnit validation accepted may-to-always strengthening"
+      status: "VERIFIED_THIS_RUN"
 
 failures:
   - id: setup_automation_001
@@ -54,6 +65,18 @@ failures:
   - id: setup_secret_scan_001
     status: resolved
     summary: "First PowerShell scan nested path arrays and failed ReadAllText; rerun with flattened paths."
+  - id: phase0_combined_command_001
+    status: resolved
+    summary: "Combined command blocked before execution due to dynamic temp-file deletion; split into non-destructive operations."
+  - id: phase0_existing_venv_001
+    status: resolved
+    summary: "Existing Python 3.14.5rc1 venv was out of project range and lacked pytest; preserved it and created ignored Python 3.13.14 venv/research."
+  - id: phase0_uv_pip_show_001
+    status: resolved
+    summary: "uv install succeeded but final python -m pip show failed because uv venv omitted pip; verified with uv pip list."
+  - id: tdd_red_contracts_001
+    status: expected_failure
+    summary: "Focused test collection failed because memoryrush.admission did not exist; minimal contract slice then made tests green."
 
 blocked_decisions:
   - "Formal atomic/qualifier schema"
@@ -62,14 +85,13 @@ blocked_decisions:
   - "Formal REVIEW policy, benchmark, model family, annotation plan, metric and threshold"
 
 next_steps:
-  - "Run baseline tests, compile and artifact audit"
-  - "Lock pilot protocol before any research result"
+  - "Complete qwen3:8b artifact/environment audit"
   - "Complete literature and code evidence audits"
-  - "Start TDD slice for provisional typed contracts after protocol commit"
+  - "Implement support solver and verifier protocols through separate TDD slices"
+  - "Freeze synthetic oracle fixtures before confirmatory evaluation"
 
 workspace:
   root: "research/direction_01_minimal_sufficient_grounding"
   findings: "findings.md"
   log: "research-log.md"
   experiment_log: "EXPERIMENT_LOG.jsonl"
-
