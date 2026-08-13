@@ -90,3 +90,76 @@ def test_runtime_contracts_reject_raw_strings_for_enum_fields() -> None:
 
     with pytest.raises(TypeError, match="support label"):
         SupportCell("claim", "span", "supports")  # type: ignore[arg-type]
+
+
+def test_runtime_contracts_reject_mutable_sequence_fields() -> None:
+    slot = QualifierSlot(QualifierKind.ENTITY, "Alice")
+    with pytest.raises(TypeError, match="qualifiers must be a tuple"):
+        AtomicClaim("claim", "Alice arrived.", [slot])  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="atomic_claims must be a tuple"):
+        CandidateClaim(
+            "candidate",
+            "Alice arrived.",
+            [AtomicClaim("claim", "Alice arrived.")],  # type: ignore[arg-type]
+        )
+    with pytest.raises(TypeError, match="reason_codes must be a tuple"):
+        ClaimFormAudit(
+            ClaimFormStatus.PASS,
+            ClaimFormStatus.PASS,
+            ["fixture"],  # type: ignore[arg-type]
+            "fixture",
+            "v1",
+        )
+    with pytest.raises(TypeError, match="supported_qualifiers must be a tuple"):
+        SupportCell(
+            "claim",
+            "span",
+            SupportLabel.SUPPORTS,
+            supported_qualifiers=[slot],  # type: ignore[arg-type]
+        )
+
+
+def test_runtime_contracts_reject_wrong_nested_element_types() -> None:
+    with pytest.raises(TypeError, match="qualifiers must contain QualifierSlot"):
+        AtomicClaim("claim", "Alice arrived.", ("Alice",))  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="atomic_claims must contain AtomicClaim"):
+        CandidateClaim("candidate", "Alice arrived.", ("claim",))  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="reason_codes must contain strings"):
+        ClaimFormAudit(
+            ClaimFormStatus.PASS,
+            ClaimFormStatus.PASS,
+            (1,),  # type: ignore[arg-type]
+            "fixture",
+            "v1",
+        )
+
+
+def test_evidence_offsets_require_exact_integers_not_booleans() -> None:
+    with pytest.raises(TypeError, match="start_char and end_char must be integers"):
+        EvidenceSpan(
+            span_id="span",
+            document_id="doc",
+            paragraph_id="p_001",
+            text="A",
+            start_char=False,  # type: ignore[arg-type]
+            end_char=1,
+            source_sha256="a" * 64,
+        )
+
+
+def test_text_contracts_raise_type_errors_instead_of_attribute_errors() -> None:
+    with pytest.raises(TypeError, match="candidate_id must be a string"):
+        CandidateClaim(1, "Alice arrived.", (AtomicClaim("c", "Alice arrived."),))  # type: ignore[arg-type]
+
+
+def test_validated_support_matrix_cannot_be_changed_through_caller_lists() -> None:
+    qualifiers = [QualifierSlot(QualifierKind.ENTITY, "Alice")]
+    claims = [AtomicClaim("claim", "Alice arrived.")]
+
+    with pytest.raises(TypeError):
+        AtomicClaim("claim", "Alice arrived.", qualifiers)  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        CandidateClaim("candidate", "Alice arrived.", claims)  # type: ignore[arg-type]
+
+    assert len(qualifiers) == 1
+    assert len(claims) == 1

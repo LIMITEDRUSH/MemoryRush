@@ -7,16 +7,36 @@ minimum invariants needed by the pilot without declaring the schema permanent.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
+from types import MappingProxyType
+from typing import TypeVar
 
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
+_T = TypeVar("_T")
+
+
 def _require_text(value: str, field_name: str) -> None:
+    if type(value) is not str:
+        raise TypeError(f"{field_name} must be a string")
     if not value.strip():
         raise ValueError(f"{field_name} must not be empty")
+
+
+def _require_typed_tuple(
+    value: tuple[_T, ...],
+    field_name: str,
+    item_type: type[_T],
+    item_name: str,
+) -> None:
+    if type(value) is not tuple:
+        raise TypeError(f"{field_name} must be a tuple")
+    if any(type(item) is not item_type for item in value):
+        raise TypeError(f"{field_name} must contain {item_name}")
 
 
 class AdmissionDecision(str, Enum):
@@ -67,6 +87,7 @@ class ClaimFormAudit:
             raise TypeError("claim-form self_sufficiency must be a ClaimFormStatus")
         if not isinstance(self.minimality, ClaimFormStatus):
             raise TypeError("claim-form minimality must be a ClaimFormStatus")
+        _require_typed_tuple(self.reason_codes, "reason_codes", str, "strings")
         _require_text(self.auditor_name, "claim-form auditor name")
         _require_text(self.auditor_version, "claim-form auditor version")
         if any(not reason.strip() for reason in self.reason_codes):
@@ -94,6 +115,18 @@ class AtomicClaim:
     def __post_init__(self) -> None:
         _require_text(self.claim_id, "claim_id")
         _require_text(self.text, "atomic claim text")
+        _require_typed_tuple(
+            self.qualifiers,
+            "qualifiers",
+            QualifierSlot,
+            "QualifierSlot values",
+        )
+        _require_typed_tuple(
+            self.required_support_parts,
+            "required_support_parts",
+            str,
+            "strings",
+        )
         qualifier_keys = [(slot.kind, slot.value.casefold()) for slot in self.qualifiers]
         if len(qualifier_keys) != len(set(qualifier_keys)):
             raise ValueError("atomic claim qualifiers must not contain duplicates")
@@ -113,6 +146,12 @@ class CandidateClaim:
     def __post_init__(self) -> None:
         _require_text(self.candidate_id, "candidate_id")
         _require_text(self.proposition, "proposition")
+        _require_typed_tuple(
+            self.atomic_claims,
+            "atomic_claims",
+            AtomicClaim,
+            "AtomicClaim values",
+        )
         if not self.atomic_claims:
             raise ValueError("candidate must contain at least one atomic claim")
         claim_ids = [claim.claim_id for claim in self.atomic_claims]
@@ -135,6 +174,9 @@ class EvidenceSpan:
         _require_text(self.document_id, "document_id")
         _require_text(self.paragraph_id, "paragraph_id")
         _require_text(self.text, "evidence text")
+        _require_text(self.source_sha256, "source_sha256")
+        if type(self.start_char) is not int or type(self.end_char) is not int:
+            raise TypeError("evidence start_char and end_char must be integers")
         if self.start_char < 0 or self.end_char <= self.start_char:
             raise ValueError("evidence offsets must be non-negative half-open offsets")
         if self.end_char - self.start_char != len(self.text):
@@ -157,6 +199,20 @@ class SupportCell:
         _require_text(self.span_id, "span_id")
         if not isinstance(self.label, SupportLabel):
             raise TypeError("support label must be a SupportLabel")
+        if type(self.rationale) is not str:
+            raise TypeError("support rationale must be a string")
+        _require_typed_tuple(
+            self.supported_qualifiers,
+            "supported_qualifiers",
+            QualifierSlot,
+            "QualifierSlot values",
+        )
+        _require_typed_tuple(
+            self.supported_claim_parts,
+            "supported_claim_parts",
+            str,
+            "strings",
+        )
         if len(self.supported_qualifiers) != len(set(self.supported_qualifiers)):
             raise ValueError("supported qualifiers must not contain duplicates")
         normalized_parts = [part.strip().casefold() for part in self.supported_claim_parts]
@@ -171,9 +227,23 @@ class SupportMatrix:
     candidate: CandidateClaim
     evidence_spans: tuple[EvidenceSpan, ...]
     cells: tuple[SupportCell, ...]
-    _cell_index: dict[tuple[str, str], SupportCell] = field(init=False, repr=False)
+    _cell_index: Mapping[tuple[str, str], SupportCell] = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.candidate, CandidateClaim):
+            raise TypeError("support matrix candidate must be a CandidateClaim")
+        _require_typed_tuple(
+            self.evidence_spans,
+            "evidence_spans",
+            EvidenceSpan,
+            "EvidenceSpan values",
+        )
+        _require_typed_tuple(
+            self.cells,
+            "cells",
+            SupportCell,
+            "SupportCell values",
+        )
         if not self.evidence_spans:
             raise ValueError("support matrix requires at least one evidence span")
         span_ids = [span.span_id for span in self.evidence_spans]
@@ -210,7 +280,7 @@ class SupportMatrix:
         if missing:
             rendered = ", ".join(f"{claim}/{span}" for claim, span in sorted(missing))
             raise ValueError(f"missing support cells: {rendered}")
-        object.__setattr__(self, "_cell_index", index)
+        object.__setattr__(self, "_cell_index", MappingProxyType(index))
 
     def cell(self, claim_id: str, span_id: str) -> SupportCell:
         return self._cell_index[(claim_id, span_id)]
