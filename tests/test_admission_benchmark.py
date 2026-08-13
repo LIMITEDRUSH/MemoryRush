@@ -239,6 +239,25 @@ def test_perturbation_operator_must_be_controlled_and_paired() -> None:
         parse_benchmark_case(payload)
 
 
+@pytest.mark.parametrize(
+    "operator",
+    [
+        "duplicate_evidence",
+        "paraphrase_meaning_preserving",
+        "paraphrase_condition_preserving",
+        "overcompose_unsupported_atom",
+    ],
+)
+def test_catalog_control_operators_are_supported(operator: str) -> None:
+    payload = _payload()
+    payload["case_id"] = "case-variant"
+    payload["provenance"].update(
+        {"base_case_id": "case-base", "perturbation_operator": operator}
+    )
+
+    assert parse_benchmark_case(payload).provenance.perturbation_operator == operator
+
+
 def test_load_benchmark_rejects_unknown_counterfactual_base_case(tmp_path) -> None:
     payload = _payload()
     payload["provenance"].update(

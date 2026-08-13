@@ -45,6 +45,10 @@ CONTROLLED_PERTURBATION_OPERATORS = {
     "delete_scope",
     "replace_modality",
     "replace_attribution",
+    "duplicate_evidence",
+    "paraphrase_meaning_preserving",
+    "paraphrase_condition_preserving",
+    "overcompose_unsupported_atom",
 }
 ALLOWED_LABEL_STATUS_PAIRS = {
     ("programmatic_oracle", "synthetic_oracle"),
