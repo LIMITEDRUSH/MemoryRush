@@ -7,6 +7,13 @@ from memoryrush.admission.decision import (
     PerturbationAudit,
     evaluate_admission,
 )
+from memoryrush.admission.evaluation import (
+    EvaluationSummary,
+    MatchedAdmissionResult,
+    MethodPrediction,
+    evaluate_predictions,
+    matched_admission_evaluation,
+)
 from memoryrush.admission.models import (
     AdmissionDecision,
     AtomicClaim,
@@ -48,12 +55,15 @@ __all__ = [
     "DeletionTrial",
     "DecisionPolicy",
     "EvidenceSpan",
+    "EvaluationSummary",
     "EvidenceSetSolver",
     "EvidenceSolution",
     "InclusionMinimalSolver",
     "ExactCopyVerifier",
     "IdOnlyVerifier",
     "MinimumCardinalitySolver",
+    "MatchedAdmissionResult",
+    "MethodPrediction",
     "PerturbationAudit",
     "QualifierKind",
     "QualifierSlot",
@@ -65,6 +75,8 @@ __all__ = [
     "Verifier",
     "audit_evidence_deletions",
     "evaluate_admission",
+    "evaluate_predictions",
     "evaluate_sufficiency",
+    "matched_admission_evaluation",
     "replace_qualifier",
 ]
