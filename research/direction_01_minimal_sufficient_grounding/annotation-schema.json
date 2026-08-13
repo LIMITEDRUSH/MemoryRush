@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/memoryrush/direction1.synthetic_oracle.v0.1.schema.json",
+  "title": "MemoryRush Direction 1 Synthetic Oracle Case v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_id", "case_family", "document", "candidate", "evidence_spans", "oracle", "provenance"],
+  "properties": {
+    "schema_version": {"const": "direction1.synthetic_oracle.v0.1"},
+    "case_id": {"type": "string", "minLength": 1},
+    "case_family": {"type": "string", "minLength": 1},
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["document_id", "title", "snapshot_text", "source_sha256", "paragraphs"],
+      "properties": {
+        "document_id": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "snapshot_text": {"type": "string", "minLength": 1},
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "paragraphs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["paragraph_id", "text"],
+            "properties": {
+              "paragraph_id": {"type": "string", "minLength": 1},
+              "text": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_id", "proposition", "atomic_claims"],
+      "properties": {
+        "candidate_id": {"type": "string", "minLength": 1},
+        "proposition": {"type": "string", "minLength": 1},
+        "atomic_claims": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claim_id", "text", "qualifiers"],
+            "properties": {
+              "claim_id": {"type": "string", "minLength": 1},
+              "text": {"type": "string", "minLength": 1},
+              "qualifiers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["kind", "value"],
+                  "properties": {
+                    "kind": {"enum": ["entity", "relation", "object", "time", "scope", "condition", "quantifier", "modality", "negation", "attribution"]},
+                    "value": {"type": "string", "minLength": 1}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "evidence_spans": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["span_id", "paragraph_id", "start_char", "end_char", "text"],
+        "properties": {
+          "span_id": {"type": "string", "minLength": 1},
+          "paragraph_id": {"type": "string", "minLength": 1},
+          "start_char": {"type": "integer", "minimum": 0},
+          "end_char": {"type": "integer", "minimum": 1},
+          "text": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "oracle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "reason_codes", "minimal_evidence_sets", "label_source", "adjudication_status"],
+      "properties": {
+        "decision": {"enum": ["ADMIT", "REVIEW", "REJECT"]},
+        "reason_codes": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "minimal_evidence_sets": {"type": "array", "items": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}},
+        "label_source": {"enum": ["programmatic_oracle", "human", "llm_generated"]},
+        "adjudication_status": {"enum": ["synthetic_oracle", "provisional", "human_gold"]}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["construction", "base_case_id", "perturbation_operator", "generator"],
+      "properties": {
+        "construction": {"type": "string", "minLength": 1},
+        "base_case_id": {"type": ["string", "null"]},
+        "perturbation_operator": {"type": ["string", "null"]},
+        "generator": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
+
