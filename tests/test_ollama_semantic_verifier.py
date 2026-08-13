@@ -13,8 +13,10 @@ from memoryrush.admission.models import (
 )
 from memoryrush.admission.benchmark import load_benchmark
 from memoryrush.admission.ollama_verifier import (
+    MAX_RENDERED_PROMPT_BYTES,
     OllamaSemanticVerifier,
     OllamaVerifierConfig,
+    render_semantic_support_prompt,
 )
 
 
@@ -37,6 +39,18 @@ def _candidate() -> CandidateClaim:
 
 def _span() -> EvidenceSpan:
     text = "The trial may finish in 2025."
+    return EvidenceSpan(
+        span_id="span-001",
+        document_id="doc-001",
+        paragraph_id="p_001",
+        text=text,
+        start_char=0,
+        end_char=len(text),
+        source_sha256="a" * 64,
+    )
+
+
+def _span_with_text(text: str) -> EvidenceSpan:
     return EvidenceSpan(
         span_id="span-001",
         document_id="doc-001",
@@ -299,6 +313,62 @@ def test_prompt_treats_source_as_untrusted_data_and_caps_input_size() -> None:
             OllamaVerifierConfig(model_name="qwen3:8b", max_input_chars=10),
             transport=transport,
         ).build_support_matrix(_candidate(), (malicious_span,))
+
+
+def test_atomic_renderer_enforces_complete_prompt_utf8_byte_cap() -> None:
+    base = render_semantic_support_prompt(_candidate(), (_span_with_text("x"),))
+    ascii_padding = MAX_RENDERED_PROMPT_BYTES - len(base.prompt_bytes) - 1
+    assert ascii_padding > 3
+
+    exact_ascii = render_semantic_support_prompt(
+        _candidate(), (_span_with_text("x" + "a" * ascii_padding),)
+    )
+    assert len(exact_ascii.prompt_bytes) == MAX_RENDERED_PROMPT_BYTES
+
+    exact_multibyte = render_semantic_support_prompt(
+        _candidate(), (_span_with_text("x" + "a" * (ascii_padding - 3) + "\u754c"),)
+    )
+    assert len(exact_multibyte.prompt_bytes) == MAX_RENDERED_PROMPT_BYTES
+
+    with pytest.raises(ValueError, match="4096 UTF-8 bytes"):
+        render_semantic_support_prompt(
+            _candidate(),
+            (_span_with_text("x" + "a" * (ascii_padding - 3) + "\u754cx"),),
+        )
+
+
+def test_atomic_verifier_refuses_oversized_complete_prompt_before_transport() -> None:
+    transport = RecordingTransport(_envelope(_valid_response()))
+    verifier = OllamaSemanticVerifier(
+        OllamaVerifierConfig(model_name="qwen3:8b"),
+        transport=transport,
+    )
+
+    with pytest.raises(ValueError, match="4096 UTF-8 bytes"):
+        verifier.build_support_matrix(
+            _candidate(),
+            (_span_with_text("\u754c" * 1_000),),
+        )
+
+    assert transport.calls == []
+
+
+def test_frozen_benchmark_atomic_prompts_fit_complete_byte_cap() -> None:
+    cases = load_benchmark(
+        Path("data/benchmarks/direction1_synthetic_v0_1.jsonl")
+    )
+    rendered_sizes = [
+        len(
+            render_semantic_support_prompt(
+                case.candidate,
+                case.evidence_spans,
+            ).prompt_bytes
+        )
+        for case in cases
+    ]
+
+    assert len(cases) == 36
+    assert max(rendered_sizes) <= MAX_RENDERED_PROMPT_BYTES
 
 @pytest.mark.parametrize(
     "kwargs",
