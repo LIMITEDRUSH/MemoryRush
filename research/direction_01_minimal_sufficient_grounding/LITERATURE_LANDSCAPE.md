@@ -44,6 +44,7 @@ site:arxiv.org "evidence deletion" claim verification LLM
 site:aclanthology.org counterfactual perturbation attribution evidence claim support
 site:aclanthology.org evidence sufficiency perturbation fact verification deletion minimal 2026
 site:arxiv.org/abs 2026 "minimal sufficient evidence" claim verification
+site:arxiv.org 2026 memory "evidence admission" source-traceable compact subset
 ```
 
 此外，对 AIS、Molecular Facts、AttributionBench、Attribute or Abstain、Minimal Evidence Group、FactLens、ProvenanceGuard、Rethinking Atomic Decomposition、Eywa、MemIR、GAVEL、TriQua 做了逐条精确标题与同名消歧检索。
@@ -59,6 +60,7 @@ site:arxiv.org/abs 2026 "minimal sufficient evidence" claim verification
 | evidence deletion | Atanasova et al. 2022 (`PR`), Pair-ID (`PP`) | 句子/constituent omission；固定 reader/retrieval 的证据增删干预与 sham controls | 从离线诊断升级为 write-time certificate，并覆盖每个已选 span 的必要性 |
 | 语义扰动与鲁棒性 | MiniCheck (`PR`), FactEval (`PR`), ConsistencyGate (`PP`) | structured factual errors；17 类输入扰动；number/negation/proper-noun corruption | 预注册 entity/number/time/negation/condition/modality 轴，并验证扰动只改变目标语义 |
 | write-time admission | A-MAC (`WS`), Selective Memory (`PP`), ConsistencyGate (`PP`) | 多因子 admission；salience/reliability gate；source-context support gate | 证明联合 certificate 超过同算力 holistic/consistency gate，而非因拒绝更多候选获胜 |
+| source-traceable evidence admission | TRACE-Memory (`PP`), GAVEL (`PR`), TierMem (`WS`) | compact evidence subset/empty-set action；显式 evidence contract；raw-evidence routing | 严格区分 inference-time utility/context selection 与 write-time source-support integrity；证明双侧 certificate 的不可约收益 |
 | false-admission propagation | ConsistencyGate (`PP`) | contamination cascade；WriteAll 与 admission-rate-matched Random | 在真实、非 pre-seeded 下游里固定 retriever/reader/storage 并匹配 coverage 测传播 |
 | provenance 与 typed memory | TierMem (`WS`), Eywa (`PP`), MemIR (`PP`), ProvenanceGuard (`PP`) | immutable evidence；raw evidence/claim/cue 分型；claim-to-source routing；allow/block | 形式化 claim-condition × evidence-span 支持矩阵和双侧最小反事实证书 |
 | 强 holistic 替代解释 | AlignScore (`PR`), MiniCheck (`PR`), Rethinking Atomic Decomposition (`PP`) | detail-matched holistic judge 可匹配或优于 atomic judge；廉价强 checker | 必须做相同输入、rubric、计算与 coverage 的 holistic 对照，不能默认 decomposition 有益 |
@@ -116,6 +118,13 @@ site:arxiv.org/abs 2026 "minimal sufficient evidence" claim verification
 - 机制：future utility、factual confidence、semantic novelty、temporal recency、content type prior 五因子 admission。
 - 数据与指标：LoCoMo；作者报告 F1 `0.583`、延迟下降 `31%`，未复现。
 - 差异：不做双侧最小性或反事实证书，但“结构化 write-time admission”和其中的 factual confidence 不是空白。
+
+#### TRACE-Memory (`PP`)
+
+- 原始来源：[arXiv:2608.08446](https://arxiv.org/abs/2608.08446)，Jing Wang、Zhu Wang、Yifan Guo、Yulong Yang、Yunji Liang，提交于 2026-08-09；作者注明 submitted to AAAI 2027，本审计不把它写成已接收论文。
+- 机制：在 personalized generation 中，先基于 request 与 public context 形成 coverage-oriented 候选池，再从 source-traceable evidence units 中选择 compact subset 或空集。每个 evidence unit 保留 source identifier、offset 和 timestamp；训练奖励比较冻结 generator 在有/无个人证据时的 response-level incremental utility，并惩罚 evidence 数量和 token 长度。
+- 数据与指标：论文构造 5,400 个 Controlled/Natural tasks（其中 4,500 train、450 validation、450 test），来源包括 Goodreads、Amazon Reviews 与 Reddit；报告 response preference、candidate recall、evidence admission precision/recall/F1、EMPTY rate 与 evidence token 数。所有数值均未在本仓库复现。
+- 与本方向差异：它假设 personal history 已存在，决定哪些记忆进入当前回答上下文，目标是相对 public-only path 的个性化增量效用；不判断候选记忆是否被冻结来源语义支持，不颁发 claim/evidence 双侧 minimal-sufficient write certificate。因此它不是直接 write-time gate，但已占据“source-traceable compact evidence admission / empty set / downstream utility”这一泛化表述，并进一步要求本方向避免把 evidence admission 本身当作新颖性。
 
 #### What Would Fix This RAG Failure? (`PP`)
 

@@ -44,6 +44,7 @@
 | 首个以语义 corruption 检查 grounded claim | `REJECTED` | MiniCheck 使用 structured factual errors；ConsistencyGate 使用 number、negation、proper-noun 与 contradiction corruption；FactEval 系统测试 17 类 perturbations。 |
 | 首个 write-time memory gate | `REJECTED` | A-MAC (`WS`)、Selective Memory (`PP`) 和 ConsistencyGate (`PP`) 均明确在 write time 决定 admission。 |
 | 首个 source-support memory admission | `REJECTED` | ConsistencyGate 在候选事实写入前直接判断 source-context support；A-MAC 也含 factual confidence。 |
+| 首个 source-traceable compact memory-evidence admission / empty-set abstention | `REJECTED` | TRACE-Memory (`PP`, 2026-08-09) 从带 source ID/offset/timestamp 的 evidence units 中选择 compact subset 或空集，并按冻结 generator 的下游增量效用训练；它不是 write-time truth gate，但已否决该泛化表述。 |
 | 首个 atomic claim-to-evidence contract | `REJECTED` | GAVEL (`PR`) 要求每个 atomic subclaim 绑定显式句子/表格单元并做 deterministic scrutiny；ProvenanceGuard 进行 claim-to-source routing。 |
 | 首个 evidence-before-belief / typed provenance memory | `REJECTED` | TierMem (`WS`)、Eywa (`PP`)、MemIR (`PP`) 已分离 immutable/raw evidence、derived claims、retrieval cues 与 source provenance。 |
 | 首个 `ADMIT / REVIEW / REJECT` 或 abstention 路径 | `REJECTED` | Attribute or Abstain、Claimify 的 ambiguity abstention、ProvenanceGuard allow/block、A-MAC/ConsistencyGate admission 均构成直接先例。 |
@@ -62,6 +63,7 @@ Molecular/Claimify/TriQua claim representation
 + MiniCheck/FactEval semantic perturbation
 + A-MAC/ConsistencyGate write admission
 + ConsistencyGate downstream contamination evaluation
++ TRACE-Memory source-traceable evidence selection and downstream utility
 ```
 
 因此，论文不能把模块清单当作 novelty proof。新颖性必须来自一个可精确定义、可被强组合基线推翻、并经交互消融证明不可约的窄机制。
@@ -89,6 +91,7 @@ Molecular/Claimify/TriQua claim representation
 | ProvenanceGuard (`PP`) | `~` | `~` | `— / ✓` | `~` source swaps | `~` allow/block | repair | answer-level source ownership，不是 memory write |
 | A-MAC (`WS`) | — | `~` | — | — | `✓` | QA | 多因子 value gate，不做双侧反事实 |
 | ConsistencyGate (`PP`) | `~` | `~` | `— / ✓` | `~` corruption | `✓` | `✓` | 最强直接威胁；缺 claim/evidence minimality |
+| TRACE-Memory (`PP`) | — | `~` | `~ / ~` compactness penalty | — | `~` inference-time evidence admission | `✓` response utility | personal-memory context selection，不是 source-support write gate |
 | Pair-ID (`PP`) | — | — | `~ / ~` | `✓` paired interventions | — | response repair | 离线 RAG audit，不是 runtime policy |
 | Rethinking Atomic Decomposition (`PP`) | `~` | `~` | — | `~` reference degradation | — | — | 强 holistic judge 可不弱于 atomic judge |
 
