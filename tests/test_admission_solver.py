@@ -53,7 +53,7 @@ def _cross_span_matrix() -> SupportMatrix:
                 "participants",
                 "001",
                 SupportLabel.SUPPORTS,
-                supported_qualifiers=(QualifierKind.QUANTIFIER,),
+                supported_qualifiers=(QualifierSlot(QualifierKind.QUANTIFIER, "120"),),
             ),
             SupportCell("participants", "002", SupportLabel.INSUFFICIENT),
             SupportCell("end-date", "001", SupportLabel.INSUFFICIENT),
@@ -61,7 +61,7 @@ def _cross_span_matrix() -> SupportMatrix:
                 "end-date",
                 "002",
                 SupportLabel.SUPPORTS,
-                supported_qualifiers=(QualifierKind.TIME,),
+                supported_qualifiers=(QualifierSlot(QualifierKind.TIME, "2025"),),
             ),
         ),
     )
@@ -162,3 +162,76 @@ def test_missing_qualifier_support_is_reported_separately() -> None:
     assert not result.is_sufficient
     assert result.missing_qualifiers == {"end-date": (QualifierKind.TIME,)}
 
+
+def test_qualifier_coverage_is_value_specific_for_same_kind_slots() -> None:
+    candidate = CandidateClaim(
+        candidate_id="candidate-two-entities",
+        proposition="Alice transferred the sample to Bob.",
+        atomic_claims=(
+            AtomicClaim(
+                claim_id="transfer",
+                text="Alice transferred the sample to Bob.",
+                qualifiers=(
+                    QualifierSlot(QualifierKind.ENTITY, "Alice"),
+                    QualifierSlot(QualifierKind.ENTITY, "Bob"),
+                ),
+            ),
+        ),
+    )
+    span = _span("alice", "Alice transferred the sample.")
+    matrix = SupportMatrix(
+        candidate=candidate,
+        evidence_spans=(span,),
+        cells=(
+            SupportCell(
+                "transfer",
+                "alice",
+                SupportLabel.SUPPORTS,
+                supported_qualifiers=(QualifierSlot(QualifierKind.ENTITY, "Alice"),),
+            ),
+        ),
+    )
+
+    result = evaluate_sufficiency(matrix, ("alice",))
+
+    assert not result.is_sufficient
+    assert result.missing_qualifier_slots == {
+        "transfer": (QualifierSlot(QualifierKind.ENTITY, "Bob"),)
+    }
+
+
+def test_partial_spans_can_jointly_cover_declared_support_parts() -> None:
+    candidate = CandidateClaim(
+        candidate_id="candidate-composed-relation",
+        proposition="The intervention caused the decline after deployment.",
+        atomic_claims=(
+            AtomicClaim(
+                claim_id="causal-relation",
+                text="The intervention caused the decline after deployment.",
+                required_support_parts=("intervention_precedes_decline", "causal_link"),
+            ),
+        ),
+    )
+    temporal = _span("temporal", "The decline followed deployment of the intervention.")
+    causal = _span("causal", "The ablation attributes the decline to the intervention.")
+    matrix = SupportMatrix(
+        candidate=candidate,
+        evidence_spans=(temporal, causal),
+        cells=(
+            SupportCell(
+                "causal-relation",
+                "temporal",
+                SupportLabel.PARTIAL,
+                supported_claim_parts=("intervention_precedes_decline",),
+            ),
+            SupportCell(
+                "causal-relation",
+                "causal",
+                SupportLabel.PARTIAL,
+                supported_claim_parts=("causal_link",),
+            ),
+        ),
+    )
+
+    assert not evaluate_sufficiency(matrix, ("temporal",)).is_sufficient
+    assert evaluate_sufficiency(matrix, ("temporal", "causal")).is_sufficient

@@ -4,6 +4,7 @@ from memoryrush.admission.decision import (
     AdmissionResult,
     ConservativeDecisionPolicy,
     DecisionPolicy,
+    PerturbationAudit,
     evaluate_admission,
 )
 from memoryrush.admission.models import (
@@ -46,6 +47,7 @@ __all__ = [
     "EvidenceSolution",
     "InclusionMinimalSolver",
     "MinimumCardinalitySolver",
+    "PerturbationAudit",
     "QualifierKind",
     "QualifierSlot",
     "SupportCell",

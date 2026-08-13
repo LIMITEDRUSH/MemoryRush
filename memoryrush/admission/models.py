@@ -60,6 +60,7 @@ class AtomicClaim:
     claim_id: str
     text: str
     qualifiers: tuple[QualifierSlot, ...] = ()
+    required_support_parts: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         _require_text(self.claim_id, "claim_id")
@@ -67,6 +68,11 @@ class AtomicClaim:
         qualifier_keys = [(slot.kind, slot.value.casefold()) for slot in self.qualifiers]
         if len(qualifier_keys) != len(set(qualifier_keys)):
             raise ValueError("atomic claim qualifiers must not contain duplicates")
+        normalized_parts = [part.strip().casefold() for part in self.required_support_parts]
+        if any(not part for part in normalized_parts):
+            raise ValueError("required support parts must not be empty")
+        if len(normalized_parts) != len(set(normalized_parts)):
+            raise ValueError("required support parts must not contain duplicates")
 
 
 @dataclass(frozen=True)
@@ -114,13 +120,19 @@ class SupportCell:
     span_id: str
     label: SupportLabel
     rationale: str = ""
-    supported_qualifiers: tuple[QualifierKind, ...] = ()
+    supported_qualifiers: tuple[QualifierSlot, ...] = ()
+    supported_claim_parts: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         _require_text(self.claim_id, "claim_id")
         _require_text(self.span_id, "span_id")
         if len(self.supported_qualifiers) != len(set(self.supported_qualifiers)):
             raise ValueError("supported qualifiers must not contain duplicates")
+        normalized_parts = [part.strip().casefold() for part in self.supported_claim_parts]
+        if any(not part for part in normalized_parts):
+            raise ValueError("supported claim parts must not be empty")
+        if len(normalized_parts) != len(set(normalized_parts)):
+            raise ValueError("supported claim parts must not contain duplicates")
 
 
 @dataclass(frozen=True)
@@ -143,12 +155,24 @@ class SupportMatrix:
             for span in self.evidence_spans
         }
         index: dict[tuple[str, str], SupportCell] = {}
+        claims = {claim.claim_id: claim for claim in self.candidate.atomic_claims}
         for cell in self.cells:
             key = (cell.claim_id, cell.span_id)
             if key in index:
                 raise ValueError(f"duplicate support cell: {cell.claim_id}/{cell.span_id}")
             if key not in expected:
                 raise ValueError(f"unknown support cell: {cell.claim_id}/{cell.span_id}")
+            claim = claims[cell.claim_id]
+            unknown_qualifiers = set(cell.supported_qualifiers) - set(claim.qualifiers)
+            if unknown_qualifiers:
+                raise ValueError(
+                    f"support cell references undeclared qualifier slots: {cell.claim_id}"
+                )
+            unknown_parts = set(cell.supported_claim_parts) - set(claim.required_support_parts)
+            if unknown_parts:
+                raise ValueError(
+                    f"support cell references undeclared claim parts: {cell.claim_id}"
+                )
             index[key] = cell
 
         missing = expected - set(index)
@@ -159,4 +183,3 @@ class SupportMatrix:
 
     def cell(self, claim_id: str, span_id: str) -> SupportCell:
         return self._cell_index[(claim_id, span_id)]
-

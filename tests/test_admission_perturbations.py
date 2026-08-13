@@ -83,3 +83,26 @@ def test_perturbation_does_not_mutate_original_candidate() -> None:
     assert "may" in original.proposition
     assert original.atomic_claims[0].qualifiers[1].value == "may"
 
+
+def test_qualifier_replacement_respects_word_boundaries() -> None:
+    candidate = CandidateClaim(
+        candidate_id="candidate-boundary",
+        proposition="mayhem may occur.",
+        atomic_claims=(
+            AtomicClaim(
+                claim_id="claim-boundary",
+                text="mayhem may occur.",
+                qualifiers=(QualifierSlot(QualifierKind.MODALITY, "may"),),
+            ),
+        ),
+    )
+
+    perturbed = replace_qualifier(
+        candidate,
+        kind=QualifierKind.MODALITY,
+        before="may",
+        after="always",
+    ).perturbed_candidate
+
+    assert perturbed.proposition == "mayhem always occur."
+    assert perturbed.atomic_claims[0].text == "mayhem always occur."

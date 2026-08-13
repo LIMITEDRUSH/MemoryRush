@@ -9,8 +9,10 @@ from memoryrush.admission.models import (
     AdmissionDecision,
     CandidateClaim,
     EvidenceSpan,
+    SupportLabel,
     SupportMatrix,
 )
+from memoryrush.admission.perturbations import CandidatePerturbation
 from memoryrush.admission.protocols import Verifier
 from memoryrush.admission.solver import (
     DeletionAudit,
@@ -20,6 +22,16 @@ from memoryrush.admission.solver import (
     audit_evidence_deletions,
     evaluate_sufficiency,
 )
+
+
+@dataclass(frozen=True)
+class PerturbationAudit:
+    operator: str
+    perturbed_candidate_id: str
+    expected_decision: AdmissionDecision
+    actual_decision: AdmissionDecision
+    passed: bool
+    actual_reason_codes: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -33,6 +45,7 @@ class AdmissionResult:
     solver_name: str
     sufficiency: SufficiencyResult
     deletion_audit: DeletionAudit | None
+    perturbation_audits: tuple[PerturbationAudit, ...] = ()
 
 
 class DecisionPolicy(Protocol):
@@ -57,6 +70,29 @@ class ConservativeDecisionPolicy:
         solutions: tuple[EvidenceSolution, ...],
     ) -> tuple[AdmissionDecision, tuple[str, ...]]:
         if solutions:
+            all_span_ids = tuple(sorted(span.span_id for span in matrix.evidence_spans))
+            selected_span_ids = set(solutions[0].selected_span_ids)
+            unselected_span_ids = tuple(
+                span_id for span_id in all_span_ids if span_id not in selected_span_ids
+            )
+            if any(
+                matrix.cell(claim.claim_id, span_id).label is SupportLabel.CONTRADICTS
+                for claim in matrix.candidate.atomic_claims
+                for span_id in unselected_span_ids
+            ):
+                return AdmissionDecision.REVIEW, (
+                    "jointly_sufficient",
+                    "candidate_pool_contradiction",
+            )
+            if any(
+                matrix.cell(claim.claim_id, span_id).label is SupportLabel.AMBIGUOUS
+                for claim in matrix.candidate.atomic_claims
+                for span_id in unselected_span_ids
+            ):
+                return AdmissionDecision.REVIEW, (
+                    "jointly_sufficient",
+                    "candidate_pool_ambiguity",
+                )
             return AdmissionDecision.ADMIT, ("jointly_sufficient",)
 
         all_span_ids = tuple(sorted(span.span_id for span in matrix.evidence_spans))
@@ -76,6 +112,7 @@ def evaluate_admission(
     verifier: Verifier,
     solver: EvidenceSetSolver,
     policy: DecisionPolicy,
+    perturbations: tuple[tuple[CandidatePerturbation, AdmissionDecision], ...] = (),
 ) -> AdmissionResult:
     """Run one auditable admission decision using replaceable components."""
 
@@ -83,6 +120,12 @@ def evaluate_admission(
     if matrix.candidate != candidate or matrix.evidence_spans != evidence_spans:
         raise ValueError("verifier returned a support matrix for different inputs")
     solutions = solver.solve(matrix)
+    for solution in solutions:
+        recomputed = evaluate_sufficiency(matrix, solution.selected_span_ids)
+        if recomputed != solution.sufficiency:
+            raise ValueError(
+                "solver returned inconsistent sufficiency for selected evidence spans"
+            )
     decision, reason_codes = policy.decide(matrix, solutions)
 
     if solutions:
@@ -97,6 +140,35 @@ def evaluate_admission(
         sufficiency = evaluate_sufficiency(matrix, selected)
         deletion_audit = None
 
+    perturbation_audits: list[PerturbationAudit] = []
+    for perturbation, expected_decision in perturbations:
+        if perturbation.original_candidate != candidate:
+            raise ValueError("perturbation was not derived from the evaluated candidate")
+        perturbed_result = evaluate_admission(
+            candidate=perturbation.perturbed_candidate,
+            evidence_spans=evidence_spans,
+            verifier=verifier,
+            solver=solver,
+            policy=policy,
+        )
+        passed = perturbed_result.decision is expected_decision
+        perturbation_audits.append(
+            PerturbationAudit(
+                operator=perturbation.operator,
+                perturbed_candidate_id=perturbation.perturbed_candidate.candidate_id,
+                expected_decision=expected_decision,
+                actual_decision=perturbed_result.decision,
+                passed=passed,
+                actual_reason_codes=perturbed_result.reason_codes,
+            )
+        )
+
+    if decision is AdmissionDecision.ADMIT and any(
+        not audit.passed for audit in perturbation_audits
+    ):
+        decision = AdmissionDecision.REVIEW
+        reason_codes = (*reason_codes, "perturbation_not_detected")
+
     return AdmissionResult(
         candidate_id=candidate.candidate_id,
         decision=decision,
@@ -107,5 +179,5 @@ def evaluate_admission(
         solver_name=solver.solver_name,
         sufficiency=sufficiency,
         deletion_audit=deletion_audit,
+        perturbation_audits=tuple(perturbation_audits),
     )
-

@@ -10,7 +10,12 @@ from dataclasses import dataclass, field
 from itertools import combinations
 from typing import Protocol
 
-from memoryrush.admission.models import QualifierKind, SupportLabel, SupportMatrix
+from memoryrush.admission.models import (
+    QualifierKind,
+    QualifierSlot,
+    SupportLabel,
+    SupportMatrix,
+)
 
 
 @dataclass(frozen=True)
@@ -21,6 +26,8 @@ class SufficiencyResult:
     contradicted_claim_ids: tuple[str, ...]
     ambiguous_claim_ids: tuple[str, ...]
     missing_qualifiers: dict[str, tuple[QualifierKind, ...]] = field(default_factory=dict)
+    missing_qualifier_slots: dict[str, tuple[QualifierSlot, ...]] = field(default_factory=dict)
+    missing_claim_parts: dict[str, tuple[str, ...]] = field(default_factory=dict)
 
     @property
     def is_sufficient(self) -> bool:
@@ -28,7 +35,8 @@ class SufficiencyResult:
             self.missing_claim_ids
             or self.contradicted_claim_ids
             or self.ambiguous_claim_ids
-            or self.missing_qualifiers
+            or self.missing_qualifier_slots
+            or self.missing_claim_parts
         )
 
 
@@ -84,6 +92,8 @@ def evaluate_sufficiency(
     contradicted: list[str] = []
     ambiguous: list[str] = []
     missing_qualifiers: dict[str, tuple[QualifierKind, ...]] = {}
+    missing_qualifier_slots: dict[str, tuple[QualifierSlot, ...]] = {}
+    missing_claim_parts: dict[str, tuple[str, ...]] = {}
 
     for claim in matrix.candidate.atomic_claims:
         cells = [matrix.cell(claim.claim_id, span_id) for span_id in selected_span_ids]
@@ -95,18 +105,33 @@ def evaluate_sufficiency(
             ambiguous.append(claim.claim_id)
             continue
 
-        supporting_cells = [cell for cell in cells if cell.label is SupportLabel.SUPPORTS]
-        if not supporting_cells:
+        supporting_cells = [
+            cell for cell in cells if cell.label in {SupportLabel.SUPPORTS, SupportLabel.PARTIAL}
+        ]
+        has_full_support = any(cell.label is SupportLabel.SUPPORTS for cell in supporting_cells)
+        covered_parts = {part for cell in supporting_cells for part in cell.supported_claim_parts}
+        uncovered_parts = set(claim.required_support_parts) - covered_parts
+        if claim.required_support_parts:
+            if uncovered_parts:
+                missing_claim_parts[claim.claim_id] = tuple(
+                    part for part in claim.required_support_parts if part in uncovered_parts
+                )
+                continue
+        elif not has_full_support:
             missing.append(claim.claim_id)
             continue
 
-        required_qualifiers = {slot.kind for slot in claim.qualifiers}
+        required_qualifiers = set(claim.qualifiers)
         covered_qualifiers = {
-            kind for cell in supporting_cells for kind in cell.supported_qualifiers
+            slot for cell in supporting_cells for slot in cell.supported_qualifiers
         }
         uncovered = required_qualifiers - covered_qualifiers
         if uncovered:
-            missing_qualifiers[claim.claim_id] = tuple(sorted(uncovered, key=lambda item: item.value))
+            ordered_slots = tuple(slot for slot in claim.qualifiers if slot in uncovered)
+            missing_qualifier_slots[claim.claim_id] = ordered_slots
+            missing_qualifiers[claim.claim_id] = tuple(
+                sorted({slot.kind for slot in ordered_slots}, key=lambda item: item.value)
+            )
             continue
         supported.append(claim.claim_id)
 
@@ -117,6 +142,8 @@ def evaluate_sufficiency(
         contradicted_claim_ids=tuple(contradicted),
         ambiguous_claim_ids=tuple(ambiguous),
         missing_qualifiers=missing_qualifiers,
+        missing_qualifier_slots=missing_qualifier_slots,
+        missing_claim_parts=missing_claim_parts,
     )
 
 
@@ -204,4 +231,3 @@ class MinimumCardinalitySolver(_ExhaustiveSolverBase):
             if solutions:
                 return solutions
         return ()
-
