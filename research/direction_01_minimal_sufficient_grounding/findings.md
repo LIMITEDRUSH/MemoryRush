@@ -34,6 +34,10 @@
 - benchmark loader 与 runtime 必须调用同一个 claim-form decision override；独立两份逻辑曾令 evidence REJECT + form REVIEW 被错误抬升，现已用回归反例消除。
 - `programmatic_oracle` 只能证明预注册派生关系保持其构造约束，不能把 provisional base 升格为客观真值；任何结果必须分层报告 27 个 provisional cases 与 9 个 conditional certificates。
 - 文献中的最接近威胁是 ConsistencyGate、A-MAC、GAVEL、MEG、TriQua、Molecular Facts/Claimify 与 Evidence Sufficiency；后续实验必须以 interaction ablation 证明不是组件堆叠。
+- 2026-08-09 的 TRACE-Memory 已从带 source ID/offset/timestamp 的 personal-memory evidence units 选择 compact subset 或空集，并按冻结 generator 的增量效用训练。它不是 source-support write-time gate，但进一步否决“source-traceable evidence admission / compact evidence / empty-set abstention”本身的新颖性。
+- 运行时隔离必须是进程边界而非仅靠参数命名：inference 进程只能接 oracle-free manifest、schedule、preflight 和本地 transport；outer mapping、原始 benchmark 与 oracle 只能在 raw outputs 封存后由 evaluator 读取。
+- 三个物理 judge role（claim-form、atomic、holistic）对应三个逻辑方法（A、B、C）；C 必须复用 A 的 atomic raw response，不能再次请求得到更有利的 matrix。
+- 冻结 36-case prompt 的完整 UTF-8 最大值为 claim-form 1,405、atomic 2,932、holistic 2,461 bytes，均低于 4,096 cap。该结果只排除了当前输入的长度门禁失败，不证明 Ollama 不截断；返回的 completion/token fields 仍须逐次验证。
 
 ## Lessons and Constraints
 
