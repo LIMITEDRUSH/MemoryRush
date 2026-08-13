@@ -265,3 +265,86 @@ def test_oracle_supported_qualifier_must_match_declared_slot_value() -> None:
 
     with pytest.raises(ValueError, match="undeclared qualifier"):
         parse_benchmark_case(payload)
+
+
+def test_oracle_decision_must_match_recomputed_certificate() -> None:
+    payload = _payload()
+    payload["oracle"]["decision"] = "REJECT"
+
+    with pytest.raises(ValueError, match="oracle decision.*recomputed"):
+        parse_benchmark_case(payload)
+
+
+def test_oracle_minimal_set_must_be_sufficient_and_inclusion_minimal() -> None:
+    payload = _payload()
+    extra = dict(payload["evidence_spans"][0])
+    extra["span_id"] = "span-002"
+    payload["evidence_spans"].append(extra)
+    payload["oracle"]["support_cells"].append(
+        {
+            **payload["oracle"]["support_cells"][0],
+            "span_id": "span-002",
+        }
+    )
+    payload["oracle"]["minimal_evidence_sets"] = [["span-001", "span-002"]]
+
+    with pytest.raises(ValueError, match="minimal evidence sets.*recomputed"):
+        parse_benchmark_case(payload)
+
+
+def test_load_benchmark_rejects_self_referential_base_case(tmp_path) -> None:
+    payload = _payload()
+    payload["provenance"].update(
+        {"base_case_id": "case-001", "perturbation_operator": "replace_modality"}
+    )
+    path = tmp_path / "benchmark.jsonl"
+    path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="cannot reference itself"):
+        load_benchmark(path)
+
+
+def test_oracle_decision_accounts_for_unselected_pool_contradiction() -> None:
+    payload = _payload()
+    extra = dict(payload["evidence_spans"][0])
+    extra["span_id"] = "span-contradiction"
+    payload["evidence_spans"].append(extra)
+    payload["oracle"]["support_cells"].append(
+        {
+            "claim_id": "claim-001",
+            "span_id": "span-contradiction",
+            "label": "contradicts",
+            "rationale": "Synthetic conflicting annotation.",
+            "supported_qualifiers": [],
+            "supported_claim_parts": [],
+        }
+    )
+    payload["oracle"]["decision"] = "REVIEW"
+
+    assert parse_benchmark_case(payload).oracle.decision.value == "REVIEW"
+
+    payload["oracle"]["decision"] = "ADMIT"
+    with pytest.raises(ValueError, match="oracle decision.*recomputed"):
+        parse_benchmark_case(payload)
+
+
+def test_load_benchmark_rejects_multi_case_base_cycle(tmp_path) -> None:
+    first = _payload()
+    first["case_id"] = "case-first"
+    first["provenance"].update(
+        {"base_case_id": "case-second", "perturbation_operator": "replace_modality"}
+    )
+    second = _payload()
+    second["case_id"] = "case-second"
+    second["candidate"]["candidate_id"] = "candidate-second"
+    second["provenance"].update(
+        {"base_case_id": "case-first", "perturbation_operator": "replace_modality"}
+    )
+    path = tmp_path / "benchmark.jsonl"
+    path.write_text(
+        json.dumps(first) + "\n" + json.dumps(second) + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="cyclic base_case_id"):
+        load_benchmark(path)

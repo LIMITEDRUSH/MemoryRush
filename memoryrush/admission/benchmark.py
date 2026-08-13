@@ -25,6 +25,8 @@ from memoryrush.admission.models import (
     SupportLabel,
     SupportMatrix,
 )
+from memoryrush.admission.decision import ConservativeDecisionPolicy
+from memoryrush.admission.solver import InclusionMinimalSolver
 
 
 SUPPORTED_SCHEMA_VERSION = "direction1.synthetic_oracle.v0.1"
@@ -203,11 +205,26 @@ def load_benchmark(path: str | Path) -> tuple[BenchmarkCase, ...]:
     case_ids = {case.case_id for case in cases}
     for case in cases:
         base_case_id = case.provenance.base_case_id
+        if base_case_id == case.case_id:
+            raise ValueError(f"case {case.case_id} cannot reference itself as base_case_id")
         if base_case_id is not None and base_case_id not in case_ids:
             raise ValueError(
                 f"case {case.case_id} references unknown base_case_id: {base_case_id}"
             )
+    _validate_base_case_graph(cases)
     return tuple(cases)
+
+
+def _validate_base_case_graph(cases: list[BenchmarkCase]) -> None:
+    parents = {case.case_id: case.provenance.base_case_id for case in cases}
+    for case_id in parents:
+        seen: set[str] = set()
+        current: str | None = case_id
+        while current is not None:
+            if current in seen:
+                raise ValueError(f"cyclic base_case_id provenance involving {current}")
+            seen.add(current)
+            current = parents[current]
 
 
 def _parse_document(payload: dict[str, Any]) -> BenchmarkDocument:
@@ -438,10 +455,16 @@ def _parse_oracle(
     )
     # Reuse the runtime contract so the frozen oracle cannot omit or invent a
     # claim/span cell, qualifier slot, or compositional support part.
-    SupportMatrix(
+    matrix = SupportMatrix(
         candidate=candidate,
         evidence_spans=evidence_spans,
         cells=support_cells,
+    )
+    _validate_oracle_certificate(
+        matrix=matrix,
+        decision=decision,
+        minimal_sets=tuple(minimal_sets),
+        claim_form=claim_form,
     )
     return OracleAnnotation(
         decision=decision,
@@ -452,6 +475,40 @@ def _parse_oracle(
         label_source=label_source,
         adjudication_status=adjudication_status,
     )
+
+
+def _validate_oracle_certificate(
+    *,
+    matrix: SupportMatrix,
+    decision: AdmissionDecision,
+    minimal_sets: tuple[tuple[str, ...], ...],
+    claim_form: ClaimFormAudit,
+) -> None:
+    recomputed_sets = {
+        solution.selected_span_ids for solution in InclusionMinimalSolver().solve(matrix)
+    }
+    declared_sets = set(minimal_sets)
+    if declared_sets != recomputed_sets:
+        raise ValueError(
+            "oracle minimal evidence sets do not match recomputed inclusion-minimal sets"
+        )
+
+    solutions = InclusionMinimalSolver().solve(matrix)
+    recomputed_decision, _ = ConservativeDecisionPolicy().decide(matrix, solutions)
+    if claim_form.self_sufficiency is ClaimFormStatus.FAIL:
+        recomputed_decision = AdmissionDecision.REJECT
+    elif claim_form.minimality is ClaimFormStatus.FAIL:
+        recomputed_decision = AdmissionDecision.REJECT
+    elif (
+        claim_form.self_sufficiency is ClaimFormStatus.REVIEW
+        or claim_form.minimality is ClaimFormStatus.REVIEW
+    ):
+        recomputed_decision = AdmissionDecision.REVIEW
+    if decision is not recomputed_decision:
+        raise ValueError(
+            "oracle decision does not match recomputed certificate: "
+            f"declared={decision.value}, recomputed={recomputed_decision.value}"
+        )
 
 
 def _parse_claim_form(payload: dict[str, Any]) -> ClaimFormAudit:
