@@ -25,7 +25,10 @@ from memoryrush.admission.models import (
     SupportLabel,
     SupportMatrix,
 )
-from memoryrush.admission.decision import ConservativeDecisionPolicy
+from memoryrush.admission.decision import (
+    ConservativeDecisionPolicy,
+    apply_claim_form_policy,
+)
 from memoryrush.admission.solver import InclusionMinimalSolver
 
 
@@ -495,15 +498,11 @@ def _validate_oracle_certificate(
 
     solutions = InclusionMinimalSolver().solve(matrix)
     recomputed_decision, _ = ConservativeDecisionPolicy().decide(matrix, solutions)
-    if claim_form.self_sufficiency is ClaimFormStatus.FAIL:
-        recomputed_decision = AdmissionDecision.REJECT
-    elif claim_form.minimality is ClaimFormStatus.FAIL:
-        recomputed_decision = AdmissionDecision.REJECT
-    elif (
-        claim_form.self_sufficiency is ClaimFormStatus.REVIEW
-        or claim_form.minimality is ClaimFormStatus.REVIEW
-    ):
-        recomputed_decision = AdmissionDecision.REVIEW
+    recomputed_decision, _ = apply_claim_form_policy(
+        recomputed_decision,
+        (),
+        claim_form,
+    )
     if decision is not recomputed_decision:
         raise ValueError(
             "oracle decision does not match recomputed certificate: "

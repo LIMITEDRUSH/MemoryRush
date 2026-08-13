@@ -348,3 +348,16 @@ def test_load_benchmark_rejects_multi_case_base_cycle(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="cyclic base_case_id"):
         load_benchmark(path)
+
+
+def test_claim_form_review_does_not_upgrade_evidence_reject() -> None:
+    payload = _payload()
+    payload["oracle"]["support_cells"][0]["label"] = "insufficient"
+    payload["oracle"]["support_cells"][0]["supported_qualifiers"] = []
+    payload["oracle"]["minimal_evidence_sets"] = []
+    payload["oracle"]["decision"] = "REJECT"
+    payload["oracle"]["claim_form"]["self_sufficiency"] = "REVIEW"
+
+    parsed = parse_benchmark_case(payload)
+
+    assert parsed.oracle.decision.value == "REJECT"

@@ -109,6 +109,36 @@ class ConservativeDecisionPolicy:
         return AdmissionDecision.REJECT, ("insufficient_support",)
 
 
+def apply_claim_form_policy(
+    decision: AdmissionDecision,
+    reason_codes: tuple[str, ...],
+    claim_form_audit: ClaimFormAudit | None,
+) -> tuple[AdmissionDecision, tuple[str, ...]]:
+    """Apply the same provisional claim-form override at every boundary."""
+
+    if claim_form_audit is None:
+        if decision is AdmissionDecision.ADMIT:
+            decision = AdmissionDecision.REVIEW
+        return decision, (*reason_codes, "claim_form_not_audited")
+
+    if claim_form_audit.self_sufficiency is ClaimFormStatus.FAIL:
+        decision = AdmissionDecision.REJECT
+        reason_codes = (*reason_codes, "claim_not_self_sufficient")
+    elif claim_form_audit.self_sufficiency is ClaimFormStatus.REVIEW:
+        if decision is AdmissionDecision.ADMIT:
+            decision = AdmissionDecision.REVIEW
+        reason_codes = (*reason_codes, "claim_self_sufficiency_unresolved")
+
+    if claim_form_audit.minimality is ClaimFormStatus.FAIL:
+        decision = AdmissionDecision.REJECT
+        reason_codes = (*reason_codes, "claim_not_minimal")
+    elif claim_form_audit.minimality is ClaimFormStatus.REVIEW:
+        if decision is AdmissionDecision.ADMIT:
+            decision = AdmissionDecision.REVIEW
+        reason_codes = (*reason_codes, "claim_minimality_unresolved")
+    return decision, reason_codes
+
+
 def evaluate_admission(
     candidate: CandidateClaim,
     evidence_spans: tuple[EvidenceSpan, ...],
@@ -182,26 +212,11 @@ def evaluate_admission(
         decision = AdmissionDecision.REVIEW
         reason_codes = (*reason_codes, "perturbation_not_detected")
 
-    if claim_form_audit is None:
-        if decision is AdmissionDecision.ADMIT:
-            decision = AdmissionDecision.REVIEW
-        reason_codes = (*reason_codes, "claim_form_not_audited")
-    else:
-        if claim_form_audit.self_sufficiency is ClaimFormStatus.FAIL:
-            decision = AdmissionDecision.REJECT
-            reason_codes = (*reason_codes, "claim_not_self_sufficient")
-        elif claim_form_audit.self_sufficiency is ClaimFormStatus.REVIEW:
-            if decision is AdmissionDecision.ADMIT:
-                decision = AdmissionDecision.REVIEW
-            reason_codes = (*reason_codes, "claim_self_sufficiency_unresolved")
-
-        if claim_form_audit.minimality is ClaimFormStatus.FAIL:
-            decision = AdmissionDecision.REJECT
-            reason_codes = (*reason_codes, "claim_not_minimal")
-        elif claim_form_audit.minimality is ClaimFormStatus.REVIEW:
-            if decision is AdmissionDecision.ADMIT:
-                decision = AdmissionDecision.REVIEW
-            reason_codes = (*reason_codes, "claim_minimality_unresolved")
+    decision, reason_codes = apply_claim_form_policy(
+        decision,
+        reason_codes,
+        claim_form_audit,
+    )
 
     return AdmissionResult(
         candidate_id=candidate.candidate_id,
