@@ -1,7 +1,13 @@
 """Regression evidence for the structural validator's semantic blind spot."""
 
 from memoryrush.domain import SourceDocument, SourceParagraph
-from memoryrush.pipeline import ArticleMemoryOutput, MemoryUnit, validate_article_memory_output
+from memoryrush.pipeline import (
+    ArticleMemoryOutput,
+    CoreIdea,
+    EvidenceSpan,
+    MemoryUnit,
+    validate_article_memory_output,
+)
 
 
 def test_id_only_memory_unit_accepts_unsupported_modality_strengthening() -> None:
@@ -22,7 +28,17 @@ def test_id_only_memory_unit_accepts_unsupported_modality_strengthening() -> Non
     )
     output = ArticleMemoryOutput(
         summary="A cautious synthetic result.",
-        core_ideas=[],
+        core_ideas=[
+            CoreIdea(
+                idea="The finding is conditional and uncertain.",
+                why_it_matters="It isolates the MemoryUnit semantic-support check.",
+                evidence=EvidenceSpan(
+                    paragraph_id="p_001",
+                    quote="may reduce latency under the tested configuration",
+                ),
+                salience_score=0.5,
+            )
+        ],
         memory_units=[
             MemoryUnit(
                 content="The intervention always reduces latency.",
@@ -39,4 +55,3 @@ def test_id_only_memory_unit_accepts_unsupported_modality_strengthening() -> Non
     # This passing assertion deliberately captures the baseline defect: the current
     # validator checks only that a MemoryUnit references an existing paragraph ID.
     assert report.is_valid
-
