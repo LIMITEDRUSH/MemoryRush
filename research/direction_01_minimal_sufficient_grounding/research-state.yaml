@@ -1,0 +1,75 @@
+project:
+  title: "Direction 01 - Joint Minimal-Sufficient Grounding Admission"
+  question: "When does a proposition-evidence pair qualify for persistent memory at write time under joint proposition/evidence minimality and sufficiency constraints?"
+  status: active
+  completion_status: INCOMPLETE
+  started_at: "2026-08-14T02:43:37+08:00"
+  minimum_work_until: "2026-08-14T12:43:37+08:00"
+  current_phase: "phase_0_baseline_and_protection"
+  locked_core_path: "DIRECTION_CHARTER.md"
+
+git:
+  branch: "codex/direction1-autoresearch"
+  baseline_head: "9676df626736106e3e5514ac17cb8c791003b236"
+  pre_research_checkpoint: "8499f5f"
+  pre_research_checkpoint_pushed: true
+  user_existing_changes_preserved: true
+
+completed:
+  - "Read user authorization and repository AGENTS.md"
+  - "Registered long-term goal and created 20-minute heartbeat"
+  - "Recorded branch, HEAD, status, diffs, untracked/ignored manifests"
+  - "Scanned committable files for common secret patterns and large files"
+  - "Created and pushed pre-research checkpoint containing only pre-existing dirty state"
+
+hypotheses:
+  - id: H1
+    status: pending
+    priority: high
+    statement: "At matched admission coverage and compute, joint admission reduces false admissions relative to ID-only, exact-quote, and strong semantic-verifier baselines."
+  - id: H2
+    status: pending
+    priority: high
+    statement: "Deletion and qualifier perturbation audits identify unsupported or semantically strengthened candidates missed by identifier/quote validity checks."
+  - id: H3
+    status: pending
+    priority: high
+    statement: "Lower false admission propagates to fewer unsupported answers under frozen downstream retrieval and answer conditions."
+
+experiments:
+  protocol_locked: false
+  primary_measure_family: "risk_coverage_and_matched_coverage"
+  baseline_value: null
+  total_runs: 0
+  confirmatory_runs: 0
+  exploratory_runs: 0
+  debugging_runs: 0
+  invalid_runs: 0
+  trajectory: []
+
+failures:
+  - id: setup_automation_001
+    status: resolved
+    summary: "Heartbeat creation rejected lowercase status enum; retried with ACTIVE."
+  - id: setup_secret_scan_001
+    status: resolved
+    summary: "First PowerShell scan nested path arrays and failed ReadAllText; rerun with flattened paths."
+
+blocked_decisions:
+  - "Formal atomic/qualifier schema"
+  - "Inclusion-minimal versus global minimum-cardinality evidence"
+  - "Final verifier and support solver"
+  - "Formal REVIEW policy, benchmark, model family, annotation plan, metric and threshold"
+
+next_steps:
+  - "Run baseline tests, compile and artifact audit"
+  - "Lock pilot protocol before any research result"
+  - "Complete literature and code evidence audits"
+  - "Start TDD slice for provisional typed contracts after protocol commit"
+
+workspace:
+  root: "research/direction_01_minimal_sufficient_grounding"
+  findings: "findings.md"
+  log: "research-log.md"
+  experiment_log: "EXPERIMENT_LOG.jsonl"
+

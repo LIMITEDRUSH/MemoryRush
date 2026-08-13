@@ -1,0 +1,1 @@
+{"event_id":"bootstrap-001","timestamp":"2026-08-14T02:43:37+08:00","kind":"BOOTSTRAP","status":"INCOMPLETE","summary":"Long-term Direction 01 goal started; no experiment result recorded.","git":{"baseline_head":"9676df626736106e3e5514ac17cb8c791003b236","pre_research_checkpoint":"8499f5f","branch":"codex/direction1-autoresearch"}}
