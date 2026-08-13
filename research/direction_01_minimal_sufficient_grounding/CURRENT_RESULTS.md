@@ -1,6 +1,6 @@
 # Current Results
 
-Updated: `2026-08-14T04:25:00+08:00`
+Updated: `2026-08-14T05:18:00+08:00`
 Overall evidence status: `MIXED`
 
 ## Verified This Run
@@ -38,13 +38,15 @@ The current TDD slices add verifier/solver-agnostic contracts, slot-specific qua
 - Initial RED: focused test collection failed with `ModuleNotFoundError: memoryrush.admission`.
 - Perturbation RED: `2 failed, 45 passed` because the audit interface was not implemented.
 - Benchmark-integrity RED: 15 failures exposed repeated-text provenance ambiguity, unknown-field acceptance and untruthful label/status combinations.
-- Stable committed GREEN before the current runner TDD: `187 passed in 3.99s`.
+- Current full-suite GREEN after the runner, Ollama-attempt isolation and relation-certificate hardening: `221 passed`.
 
-The repository now contains a canonical 36-case JSONL microbenchmark at SHA-256 `013c7fd918599ad5d37e7dcaacd35f09f1c5549186f474195a2957f69b533371`: 20 ADMIT, 13 REJECT and 3 REVIEW across 14 families. Provenance is 25 agent/LLM-authored provisional labels and 11 mechanically constructed synthetic-oracle labels. None are human gold. C014/C023/C026 remain explicit semantic risks. The semantic-sham provenance, qualifier-loss representation and truncated evidence spans were corrected before any method or model result was observed.
+The repository now contains a canonical 36-case, 82,639-byte JSONL microbenchmark at SHA-256 `36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321`: 20 ADMIT, 13 REJECT and 3 REVIEW across 14 families. Provenance is 27 agent/LLM-authored provisional labels and 9 conditional programmatic relation labels. None are human gold. The programmatic labels certify only registered transformations relative to frozen provisional bases; they are not independent semantic ground truth. C006 and C020 use `insufficient`, not `contradicts`, for their expected support cells. C014 (`must -> may`) and C034 (unsupported over-composed atom) were downgraded from programmatic-oracle provenance to provisional status because their labels are not mechanically established. C014/C023/C026/C034 therefore remain explicit semantic risks.
 
 The evaluator keeps oracle decisions outside prediction records, requires exact case-universe joins and reports REVIEW separately from REJECT. Fixed-count matched admission is explicit opt-in and is documented as neither calibrated nor automatically fair. A local Ollama adapter for `qwen3:8b` now uses a versioned prompt, JSON schema, seed/temperature/context controls, strict envelope validation and raw-run metadata. Its offline tests include frozen qualifier-edge matrices, but it has not yet been run on the benchmark.
 
-The deterministic runner/CLI is currently `LOCAL_IN_PROGRESS`: its files are untracked and undergoing adversarial TDD for protocol/artifact alignment. It is not counted as implemented, verified or committed here.
+The provenance-safe deterministic runner and CLI are implemented, covered by adversarial tests, committed in `92cc8cd`, and pushed. They are intentionally `DEBUGGING`-only: they do not convert the synthetic labels into confirmatory evidence, and no deterministic benchmark result artifact is reported here. The relation-certificate hardening and benchmark revision were pushed in `d6fde5f`; the semantic pilot protocol was then locked and pushed in `ca40b68`, still before any benchmark model run.
+
+The Ollama semantic-verifier adapter is implemented, offline-tested, committed and pushed (including attempt-state isolation in `eaf41b0`). It has not been run on this 36-case benchmark; therefore there is no benchmark model result, semantic accuracy claim or model-comparison result.
 
 This verifies framework behavior and adversarial invariants only. No strong semantic verifier or admission advantage has yet been measured.
 
@@ -52,7 +54,7 @@ This verifies framework behavior and adversarial invariants only. No strong sema
 
 The independent audit searched and deduplicated 41 candidates and deeply inspected 20 closest works using primary paper/proceedings sources. Every individual component and generic write-time support-gating claim has prior art. The surviving statement is deliberately narrow: a single double-sided, counterfactual write certificate may still be novel as a benchmark/evaluation protocol if an interaction gain survives strong compositional baselines and matched coverage/compute/downstream conditions.
 
-Status: broad novelty `CONTRADICTED_UNDER_TESTED_LITERATURE_SEARCH`; narrow delta `MIXED / NOT_YET_DEMONSTRATED`. Search non-discovery is not proof of absence.
+Status: broad novelty `REJECTED / CONTRADICTED_UNDER_TESTED_LITERATURE_SEARCH`; narrow delta `MIXED / NOT_YET_DEMONSTRATED`. Search non-discovery is not proof of absence, and no experiment has yet demonstrated the narrow interaction claim.
 
 ### Existing qwen artifact audit
 

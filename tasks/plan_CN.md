@@ -38,7 +38,7 @@ MemoryRush 应重新作为个人 AI/ML 研究原型推进。第一条有价值�
 - [x] unsupported inputs 有清楚错误。
 - [x] parsed output 能序列化并供后续 pipeline 使用。
 
-说明：parser 行为已通过 compile checks、parser script output 和手工 assertions 验证。正式 `pytest` 命令需要等当前 Python 环境安装 `pytest` 后再跑。
+说明：parser 行为已通过 compile checks、parser script output 和回归测试验证；当前独立 Python 3.13 research environment 的完整测试为 `221 passed`。
 
 ### Phase 2: Structured Memory Pipeline
 
@@ -52,7 +52,7 @@ MemoryRush 应重新作为个人 AI/ML 研究原型推进。第一条有价值�
 - [x] missing 或 invalid evidence 失败。
 - [x] pipeline tests 不需要 live model。
 
-说明：Phase 2 contracts 当前使用标准库 dataclasses，因为 active environment 没有安装 `pydantic`。行为已通过手工 assertions 和 compile checks 验证；正式 `pytest` 仍需等测试依赖安装后再跑。
+说明：Phase 2 contracts 使用标准库 dataclasses。当前独立 Python 3.13 research environment 已安装测试依赖，完整测试为 `221 passed`。
 
 ### Phase 3: Local LLM Prototype
 
@@ -74,6 +74,17 @@ MemoryRush 应重新作为个人 AI/ML 研究原型推进。第一条有价值�
 - [ ] Task 10: 创建第一版 10-20 篇文章 benchmark。
 - [ ] Task 11: 添加 evaluation metrics。
 - [ ] Task 12: 添加 simple baselines。
+
+Direction 1 工程进度（不替代以上正式 human-benchmark 任务）：
+
+- [x] 已实现 provisional admission contracts、严格 synthetic benchmark loader 和 provenance-safe evaluator，并 commit/push。
+- [x] 已冻结 36-case / 82,639-byte synthetic microbenchmark：SHA-256 `36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321`，20 ADMIT / 13 REJECT / 3 REVIEW，27 provisional + 9 conditional programmatic relations，0 human gold。
+- [x] 已实现、验证、commit/push deterministic runner/CLI；其输出严格限定为 `DEBUGGING`，尚无 benchmark 结果 artifact。
+- [x] 已实现、离线验证、commit/push Ollama semantic-verifier adapter，并在 `ca40b68` 锁定 semantic pilot protocol；尚未运行 36-case benchmark 模型实验。
+- [ ] 用锁定协议实现并审计 atomic-versus-holistic semantic pilot runner，再运行 bounded local-model pilot。
+- [ ] 在用户决定正式 schema、REVIEW policy、verifier/solver、model、human annotation、metric 与 threshold 后，建立 human-labeled benchmark。
+
+科学结论边界：广义 write-time support-gating 新颖性已被最近工作否定；窄 joint-certificate interaction delta 尚未展示。C006/C020 的 support-cell 标签为 `insufficient`；C014/C034 已从 programmatic oracle 降级为 provisional。不得把 conditional synthetic labels、静态 oracle 或 LLM 判断写成人类 gold 或 confirmatory truth。
 
 ### Checkpoint: Measured Prototype
 

@@ -1,20 +1,25 @@
 # Deterministic Baseline Run Protocol v0.1
 
-Protocol status: `LOCKED_BEFORE_RESULTS`  
-Decision status: `PROVISIONAL_AGENT_DESIGN`  
-Frozen input commit: `e450662`  
-Frozen benchmark: `data/benchmarks/direction1_synthetic_v0_1.jsonl`  
-Frozen benchmark SHA-256: `013c7fd918599ad5d37e7dcaacd35f09f1c5549186f474195a2957f69b533371`
+Protocol status: `LOCKED_BEFORE_RESULTS`; `DEBUGGING_ONLY`
+Decision status: `PROVISIONAL_AGENT_DESIGN`
+Frozen input commit: `d6fde5f`
+Frozen benchmark: `data/benchmarks/direction1_synthetic_v0_1.jsonl`
+Frozen benchmark SHA-256: `36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321`
+Frozen benchmark bytes / cases: `82639 / 36`
+Frozen decisions: `20 ADMIT / 13 REJECT / 3 REVIEW`
+Frozen provenance: `27 llm_generated/provisional / 9 programmatic_oracle/synthetic_oracle`
 
 ## 1. Purpose and Run Classes
 
-The first deterministic run is `DEBUGGING`, not a method-effect experiment. It checks end-to-end loading, oracle isolation, typed predictions, three-way metrics, artifact provenance and expected structural-baseline failure modes over all 36 frozen cases.
+Any run produced by this deterministic runner is `DEBUGGING`, not a method-effect experiment and not confirmatory evidence. It may check end-to-end loading, oracle isolation, typed predictions, three-way metrics, artifact provenance and expected structural-baseline failure modes over all 36 frozen cases.
 
-A narrow `CONFIRMATORY` descriptive slice may report exact outcomes only for mechanically labelled programmatic transformations whose interpretation does not depend on human semantic equivalence. The following ten cases are frozen for that slice:
+Nine derived cases have suite-specific conditional relation certificates:
 
-`MSG-C006`, `MSG-C008`, `MSG-C009`, `MSG-C011`, `MSG-C013`, `MSG-C016`, `MSG-C018`, `MSG-C020`, `MSG-C022`, `MSG-C034`.
+`MSG-C006`, `MSG-C008`, `MSG-C009`, `MSG-C011`, `MSG-C013`, `MSG-C016`, `MSG-C018`, `MSG-C020`, `MSG-C022`.
 
-`MSG-C014` remains programmatically transformed but is excluded from the confirmatory slice because whether deontic `must` supports or conflicts with `may` is an unresolved protocol choice. It is reported separately as `EXPLORATORY_HIGH_RISK`. C023 and C026 are also high-risk agent-authored cases. All 25 agent/LLM-authored labels remain provisional and cannot be called human gold or confirmatory natural-distribution evidence.
+For each of these cases, the loader requires a pre-registered paired transformation, pins canonical source and base-case digests, and derives the expected transition from that relation. This prevents a self-consistent forged derived label from being accepted. It does **not** make the base annotation objective truth: every certificate remains conditional on an agent-authored, provisional base case. `MSG-C014` and `MSG-C034` were downgraded to `llm_generated/provisional` because their semantic decisions are not mechanically entailed by the recorded edit. All 27 agent/LLM-authored labels remain provisional; none may be called human gold or confirmatory natural-distribution evidence.
+
+No deterministic result artifact exists at this protocol revision.
 
 No statistical significance, generalization, human agreement or proposed-method superiority claim is permitted from this microbenchmark.
 
@@ -78,6 +83,8 @@ Each artifact must record:
 
 Raw failures are retained and classified `INVALID_RUN` when validation cannot complete.
 
+Duplicate minimal-evidence-set entries are invalid certificates, including the same set repeated in a different order. The duplicate-evidence control may contain two distinct singleton minimal sets, but it may not repeat one set.
+
 ## 8. Expected Falsification Value
 
 - The ID-only support proxy is expected to expose false admission because it has no semantic check. Its exact rate is not prespecified and must not be reported as the full production validator's benchmark rate.
@@ -85,4 +92,4 @@ Raw failures are retained and classified `INVALID_RUN` when validation cannot co
 - Static oracle must reproduce 36/36 decisions; failure falsifies plumbing integrity.
 - These results do not establish that deletion, perturbation or joint admission adds value over a strong semantic verifier.
 
-The next model protocol is permitted only after this runner and artifact format pass offline tests and this protocol commit predates the result commit.
+Any later semantic or model run requires its own pre-result protocol and raw artifacts. This deterministic protocol grants no confirmatory run class.

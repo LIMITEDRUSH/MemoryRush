@@ -17,8 +17,11 @@
 - provenance loader 已对重复段落坐标、未知字段和标签来源/裁决状态组合 fail closed；这是数据完整性修复，不是方法结果。
 - qualifier coverage 已从类型级改为具体 slot 级；两个同类型实体不再被一个 `ENTITY` 标记错误覆盖。
 - 两个 `PARTIAL` span 可通过显式 required support parts 联合支持一个不可误拆的跨句命题；这只是 provisional representation。
-- 36-case catalog 已冻结为设计协议：22 个 agent-authored/provisional、14 个 programmatic synthetic-oracle；它尚不是物化 JSONL，更不是 human gold。
+- 36-case catalog 已物化并冻结：20/13/3 ADMIT/REJECT/REVIEW，27 个 agent-authored/provisional、9 个 conditional programmatic relation certificates；SHA-256 为 `36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321`，82,639 bytes。它不是 human gold，且尚无 benchmark 方法结果。
 - benchmark oracle 现在必须与 support matrix 重算出的全部 inclusion-minimal sets 和同一三路 policy 一致；证书 integrity 是工程结果，不是效果结果。
+- 仅内部自洽的 oracle 不是独立证书：loader 现只接受九个预注册 paired relations，并固定 canonical source/base-case digests。该机制阻止 self-consistent label forgery，但关系标签仍条件于 agent-authored provisional base 的语义正确性。
+- C014（deontic `must -> may`）与 C034（新增 atom 的无支持）不能由表面 edit 机械决定，已在首次 benchmark 结果前降为 provisional；C006 与 C020 在 open-world 语义下是 `insufficient_evidence`，不是显式 `contradicted`。
+- duplicate minimal-evidence-set 编码现在 fail closed；C022 的两个不同 singleton sets 合法，但重复同一 set（包括换序）非法。
 - ID-only、exact-copy 与 static-oracle adapters 已实现。后者只作 plumbing upper bound；前两者均不是 strong semantic verifier。
 
 ## Patterns and Insights
@@ -29,6 +32,7 @@
 - 当前回归例说明 paragraph-ID validity 与 semantic support 是两个不同 estimand；后续 baseline 报告不得混称。
 - 可替换 solver 的输出不能被 orchestration 盲信；当前边界会对选中 evidence 重新计算 sufficiency，避免伪造/bug result 污染 admission record。
 - benchmark loader 与 runtime 必须调用同一个 claim-form decision override；独立两份逻辑曾令 evidence REJECT + form REVIEW 被错误抬升，现已用回归反例消除。
+- `programmatic_oracle` 只能证明预注册派生关系保持其构造约束，不能把 provisional base 升格为客观真值；任何结果必须分层报告 27 个 provisional cases 与 9 个 conditional certificates。
 - 文献中的最接近威胁是 ConsistencyGate、A-MAC、GAVEL、MEG、TriQua、Molecular Facts/Claimify 与 Evidence Sufficiency；后续实验必须以 interaction ablation 证明不是组件堆叠。
 
 ## Lessons and Constraints

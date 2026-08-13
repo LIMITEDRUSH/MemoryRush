@@ -5,7 +5,7 @@ project:
   completion_status: INCOMPLETE
   started_at: "2026-08-14T02:43:37+08:00"
   minimum_work_until: "2026-08-14T12:43:37+08:00"
-  current_phase: "phase_4_5_deterministic_runner_before_results"
+  current_phase: "phase_4_5_protocol_and_runner_ready_before_benchmark_results"
   locked_core_path: "DIRECTION_CHARTER.md"
 
 git:
@@ -14,6 +14,8 @@ git:
   pre_research_checkpoint: "8499f5f"
   pre_research_checkpoint_pushed: true
   user_existing_changes_preserved: true
+  current_head_at_status_capture: "ca40b68"
+  pushed_through_at_status_capture: "ca40b68"
 
 completed:
   - "Read user authorization and repository AGENTS.md"
@@ -35,13 +37,19 @@ completed:
   - "Bound benchmark oracle decisions and minimal evidence sets to runtime certificate recomputation"
   - "Unified claim-form decision semantics across runtime evaluation and benchmark loading"
   - "Froze a 36-case synthetic design catalog with explicit provisional/programmatic provenance and leakage controls"
-  - "Materialized and hash-froze 36 strict JSONL cases at SHA-256 013c7fd9...3371"
-  - "Corrected semantic-sham provenance before results: 25 agent/LLM provisional and 11 programmatic synthetic-oracle cases"
+  - "Materialized and hash-froze 36 strict JSONL cases at SHA-256 36390f95...8321 (82,639 bytes; 20 ADMIT, 13 REJECT, 3 REVIEW)"
+  - "Corrected benchmark provenance before results: 27 agent/LLM provisional and 9 conditional programmatic relation cases; none are human gold"
+  - "Downgraded C014 and C034 to provisional provenance because their decisions are not mechanically established"
+  - "Corrected C006 and C020 expected support cells to insufficient rather than contradicts"
   - "Implemented provenance-safe native/matched evaluation with an oracle-free prediction contract"
   - "Implemented a traceable qwen3:8b/Ollama semantic-verifier adapter; no benchmark model run yet"
+  - "Isolated Ollama adapter attempt state across transport failures; still no benchmark model run"
   - "Made core support labels orthogonal to qualifier-slot coverage and replayed four frozen edge matrices"
   - "Locked deterministic baseline protocol before results in commit 74b128e"
-  - "Verified committed framework plus frozen benchmark: 187 tests passed"
+  - "Implemented, verified, committed and pushed the DEBUGGING-only deterministic runner/CLI in commit 92cc8cd"
+  - "Bound conditional programmatic labels to frozen base/transformation relation certificates and pushed through d6fde5f"
+  - "Locked and pushed the semantic pilot protocol in commit ca40b68 before any benchmark model run"
+  - "Verified current committed framework plus frozen benchmark: 221 tests passed"
 
 hypotheses:
   - id: H1
@@ -105,6 +113,9 @@ failures:
   - id: audit_claim_form_certificate_001
     status: resolved
     summary: "Benchmark certificate REVIEW override initially disagreed with runtime semantics for evidence REJECT; a RED regression led to one shared claim-form policy."
+  - id: audit_relation_certificate_001
+    status: resolved
+    summary: "Self-consistent oracle cells were not independent relation certificates; registered frozen base/transformation checks now fail closed, and C014/C034 were downgraded to provisional provenance."
 
 blocked_decisions:
   - "Formal atomic/qualifier schema"
@@ -113,9 +124,9 @@ blocked_decisions:
   - "Formal REVIEW policy, benchmark, model family, annotation plan, metric and threshold"
 
 next_steps:
-  - "Finish and independently audit the local deterministic runner before any result artifact"
+  - "Keep all deterministic baseline outputs DEBUGGING-only and do not treat them as confirmatory semantic evidence"
   - "Run the protocol-locked DEBUGGING structural proxy/exact-copy/static-oracle evaluation"
-  - "Lock and run a bounded local qwen3:8b atomic-versus-holistic semantic pilot"
+  - "Implement the protocol-locked bounded qwen3:8b atomic-versus-holistic semantic pilot runner before any benchmark model run"
   - "Add risk-coverage, matched-coverage and frozen downstream propagation metrics"
   - "Run deterministic end-to-end benchmark, deletion and perturbation ablations"
   - "Complete production-validator hardening and final code audit without confusing structural validity with semantic support"
@@ -127,10 +138,15 @@ workspace:
   experiment_log: "EXPERIMENT_LOG.jsonl"
 
 checkpoint:
-  updated_at: "2026-08-14T04:25:00+08:00"
-  head: "9d2a3b1"
-  pushed_through: "e450662"
-  full_tests: "187 passed in 3.99s before the experiment-runner RED slice"
-  benchmark_sha256: "013c7fd918599ad5d37e7dcaacd35f09f1c5549186f474195a2957f69b533371"
-  local_in_progress: "experiment_runner.py/CLI/tests are untracked TDD under adversarial repair and are not counted as verified or committed"
+  updated_at: "2026-08-14T05:18:00+08:00"
+  head: "ca40b68"
+  pushed_through: "ca40b68"
+  full_tests: "221 passed"
+  benchmark_sha256: "36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321"
+  benchmark_bytes: 82639
+  benchmark_cases: 36
+  benchmark_decisions: "20 ADMIT / 13 REJECT / 3 REVIEW"
+  benchmark_provenance: "27 provisional llm_or_agent / 9 conditional programmatic relations / 0 human gold"
+  runner_status: "implemented, verified, committed and pushed; DEBUGGING-only; no result artifact reported"
+  ollama_benchmark_status: "adapter implemented, verified, committed and pushed; no 36-case benchmark model run"
   novelty_status: "MIXED_NOT_YET_DEMONSTRATED"

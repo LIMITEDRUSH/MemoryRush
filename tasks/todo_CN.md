@@ -34,7 +34,7 @@
 - [x] contract 命名和 research spec 一致，或记录兼容原因。
 
 **验证：**
-- [ ] 现有 parser tests 通过。待处理：当前 Python 环境未安装 `pytest`。
+- [x] 现有 parser tests 已包含在独立 Python 3.13 research environment 的完整回归测试中（`221 passed`）。
 - [x] 对照 `docs/RESEARCH_SPEC.md` 手动 review。
 
 **依赖：** Task 0
@@ -57,7 +57,7 @@
 
 **验证：**
 - [x] `python scripts/parse_docs.py data/sample_docs`
-- [ ] `python -m pytest tests/test_text_parser.py`。待处理：当前 Python 环境未安装 `pytest`。
+- [x] `tests/test_text_parser.py` 已包含在完整回归测试中（`221 passed`）。
 
 **依赖：** Task 1
 
@@ -101,7 +101,7 @@
 - [x] validation output 可被 tests 和 scripts 检查。
 
 **验证：**
-- [ ] `python -m pytest tests/pipeline`。待处理：当前 Python 环境未安装 `pytest`。
+- [x] 对应 pipeline tests（`tests/test_pipeline_contracts.py` 与 `tests/test_article_memory_pipeline.py`）已包含在独立 Python 3.13 research environment 的完整回归测试中（`221 passed`）；仓库没有 `tests/pipeline` 目录。
 
 **依赖：** Task 3
 
@@ -121,7 +121,7 @@
 - [x] invalid fake output 生成 validation issues。
 
 **验证：**
-- [ ] `python -m pytest tests/pipeline`。待处理：当前 Python 环境未安装 `pytest`。
+- [x] 对应 pipeline tests（`tests/test_pipeline_contracts.py` 与 `tests/test_article_memory_pipeline.py`）已包含在独立 Python 3.13 research environment 的完整回归测试中（`221 passed`）；仓库没有 `tests/pipeline` 目录。
 - [x] `python -m compileall memoryrush scripts app tests`
 
 **依赖：** Task 4
@@ -203,6 +203,8 @@
 
 **说明：** 定义 benchmark labels 的 JSONL 格式，用于评价 salience 和 evidence grounding。
 
+**当前状态：** 原任务仍未完成。Direction 1 已实现并推送一套 provisional synthetic admission schema/loader，但这不是用户确认后的正式 human-annotation schema。正式 atomic/qualifier schema、REVIEW policy、verifier/solver、model、human annotation plan、metric 和 threshold 均保留为用户未决项。
+
 **验收标准：**
 - [ ] Schema 包含 document ID、paragraph ID、salience label、expected memory idea、evidence reference。
 - [ ] Schema 支持 high、medium、low salience labels。
@@ -210,6 +212,7 @@
 
 **验证：**
 - [ ] Annotation schema check script 或 focused test。
+- [x] Direction 1 synthetic loader/contract 已纳入当前完整回归测试（`221 passed`）；这只验证工程约束，不验证人类标注可靠性。
 
 **依赖：** Task 5
 
@@ -224,6 +227,8 @@
 
 **说明：** 构建 10-20 篇安全文章的小 benchmark，包含 salience labels 和 expected memory units。
 
+**当前状态：** 原 human-labeled article benchmark 仍未完成。另有一个已推送的 36-case synthetic microbenchmark（82,639 bytes；SHA-256 `36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321`）：20 ADMIT / 13 REJECT / 3 REVIEW，27 agent/LLM provisional + 9 conditional programmatic relations，0 human gold。C006/C020 的 support-cell 预期是 `insufficient`；C014/C034 已降级为 provisional。
+
 **验收标准：**
 - [ ] 每个 benchmark document 有 parsed source paragraphs。
 - [ ] 每篇文档至少有几个 high-salience labels。
@@ -232,6 +237,7 @@
 **验证：**
 - [ ] Benchmark loader 能读取每个 example。
 - [ ] 手动检查 privacy/copyright risk。
+- [x] Direction 1 synthetic loader 能读取并严格校验全部 36 cases；这不满足 human-gold 或自然分布验收项。
 
 **依赖：** Task 9
 
@@ -246,6 +252,8 @@
 
 **说明：** 测量 schema validity、evidence validity、salience ranking quality、duplicate rate、recall-question answerability。
 
+**当前状态：** 原 extraction/salience evaluation 未完成。Direction 1 已实现并推送 provenance-safe native/matched evaluation 与 `DEBUGGING`-only runner/CLI；尚未生成此 benchmark 的结果 artifact，也没有 semantic accuracy、方法优势或 confirmatory 结果。
+
 **验收标准：**
 - [ ] Evaluation 一条命令可运行。
 - [ ] Results 写入可检查文件。
@@ -253,6 +261,7 @@
 
 **验证：**
 - [ ] `python scripts/evaluate_memory_units.py data/annotations`
+- [x] Direction 1 runner/evaluator 已通过当前完整回归测试（`221 passed`），并 commit/push；运行级科学结果仍为空。
 
 **依赖：** Task 10
 
@@ -266,6 +275,8 @@
 ## Task 12: Add Simple Baselines
 
 **说明：** 在做任何效果声称前，与更简单的方法比较。
+
+**当前状态：** 原 summary/position/TF-IDF baselines 未完成。Direction 1 的 ID-only、exact-copy 和 static-oracle adapters 与 runner 已实现、验证、commit/push，但只允许 `DEBUGGING` 使用；static oracle 是 plumbing check，不是语义 baseline。Ollama adapter 与 semantic pilot protocol 已 commit/push 到 `ca40b68`，但尚未运行 36-case benchmark 模型实验。广义新颖性已被最近工作否定，窄 interaction delta 尚未展示。
 
 **验收标准：**
 - [ ] summary-only baseline 存在。

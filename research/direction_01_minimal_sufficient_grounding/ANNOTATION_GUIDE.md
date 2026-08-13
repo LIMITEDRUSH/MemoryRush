@@ -12,7 +12,7 @@ Each case contains a frozen document, one candidate proposition, provisional ato
 
 Every paragraph records ordered, non-overlapping `snapshot_start` / `snapshot_end` offsets into the frozen document. Evidence offsets remain paragraph-local. This two-level coordinate system prevents repeated paragraph text from being silently mapped to the wrong occurrence.
 
-Synthetic oracle records must include a total `support_cells` matrix: exactly one label for every declared atomic-claim × evidence-span pair, with value-specific supported qualifier slots and any declared compositional support parts. They also include a separate `claim_form` audit for self-sufficiency and proposition minimality. A final `ADMIT` label alone is not enough to reconstruct or audit the mechanism.
+Every frozen oracle record must include a total `support_cells` matrix: exactly one label for every declared atomic-claim × evidence-span pair, with value-specific supported qualifier slots and any declared compositional support parts. It also includes a separate `claim_form` audit for self-sufficiency and proposition minimality. A final `ADMIT` label alone is not enough to reconstruct or audit the mechanism.
 
 ## Support Labels
 
@@ -44,7 +44,7 @@ A claim is not fully supported when the source says *may* and the candidate says
 
 Evidence is sufficient when the selected set jointly supports the complete proposition. Topic relevance is not support. Exact copying is neither necessary nor sufficient: paraphrases can be supported, and a copied phrase can be combined into an unsupported proposition.
 
-For synthetic oracle cases, list every known minimal evidence set. Two provisional minimality notions are tracked:
+For all frozen cases, list every known minimal evidence set. Repeating the same set is invalid even if its span IDs are reordered. Two provisional minimality notions are tracked:
 
 - inclusion-minimal: deleting any selected span makes the set insufficient;
 - minimum-cardinality: no sufficient set uses fewer spans.
@@ -65,13 +65,17 @@ Record annotators independently before discussion. Preserve initial labels, rati
 
 ## Provenance and Truthful Labeling
 
-- `programmatic_oracle`: generated from an explicitly controlled transformation with a deterministic expected label.
+- `programmatic_oracle`: permitted only for a suite-registered paired relation whose expected transition is mechanically checkable against a pinned canonical base and source.
 - `llm_generated`: proposed by an LLM/agent; always provisional until independently reviewed.
 - `human`: supplied by a named human annotation process.
 
-The allowed source/status pairs are `programmatic_oracle/synthetic_oracle`, `llm_generated/provisional`, and `human/{provisional,human_gold}`. Provenance separately records `generator_type` as `programmatic`, `llm_or_agent`, or `human`; it must agree with the label source. An LLM/agent-generated label must never use `human_gold`. Synthetic oracle labels are not a substitute for natural human-labeled data.
+The allowed source/status pairs are `programmatic_oracle/synthetic_oracle`, `llm_generated/provisional`, and `human/{provisional,human_gold}`. Provenance separately records `generator_type` as `programmatic`, `llm_or_agent`, or `human`; it must agree with the label source. An LLM/agent-generated label must never use `human_gold`.
 
-A controlled counterfactual must record both a valid `base_case_id` and an allow-listed `perturbation_operator`. Neither field may appear alone, and the referenced base case must be present in the same frozen JSONL file.
+`programmatic_oracle` is a conditional relation certificate, not a semantic ground-truth upgrade. The loader must reject any unregistered, missing, or duplicate relation and must pin the canonical source and complete base-case digests so a coordinated base-plus-derived mutation cannot pass. The derived transition can be mechanically checked, but the certificate still assumes the agent-authored provisional base annotation is correct. It is not a substitute for natural human-labeled data.
+
+A paired case records both a valid `base_case_id` and an allow-listed `perturbation_operator`; neither field may appear alone, and the referenced base must be present in the same frozen JSONL file. Those fields may remain on a provisional semantic pair for auditability, but they confer no programmatic-oracle status. To claim `programmatic_oracle`, the pair must additionally match the suite's registered relation and canonical digests.
+
+Do not infer contradiction merely because the evidence names a different entity or speaker. Under an open-world reading, “North Workshop did X” does not entail “South Workshop did not do X,” and “Mira wrote X” does not entail “Tomas did not write X.” When the candidate's entity or attribution is unsupported but not explicitly negated, use `insufficient_evidence`; reserve `contradicted` for explicit incompatible content.
 
 ## Minimal Examples
 
@@ -93,6 +97,7 @@ Before accepting an annotation record:
 2. span text matches paragraph-local offsets;
 3. every candidate qualifier has been inspected;
 4. minimal evidence IDs exist and are deletion-checked;
-5. provenance and adjudication status are truthful;
-6. rationale distinguishes evidence absence, contradiction and ambiguity;
-7. no private or copyrighted full-text material has been introduced.
+5. minimal evidence sets are unique after treating each as an unordered set;
+6. provenance and adjudication status are truthful; any programmatic label matches its registered pair and pinned base;
+7. rationale distinguishes evidence absence, contradiction and ambiguity;
+8. no private or copyrighted full-text material has been introduced.

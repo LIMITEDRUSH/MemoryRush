@@ -6,7 +6,7 @@
 
 本文件记录已经明确确认的需求、技术方向、协作方式和当前状态。它不是完整聊天记录，也不记录尚未确认的讨论。
 
-最后更新：2026-08-12
+最后更新：2026-08-14
 
 ## 项目定位
 
@@ -43,11 +43,15 @@ MemoryRush 是一个个人、本地优先、研究导向的 AI/ML 工程项目�
 - Phase 1：TXT/Markdown 解析、稳定段落表示已在本地实现。
 - Phase 2：结构化输出 contracts、证据引用检查、fake-provider pipeline 已在本地实现。
 - Phase 3：Ollama provider、第一版 Prompt、fake artifact 和 `qwen3:8b` 真实 artifact 已在本地完成。
-- Phase 4 及以后：benchmark、evaluation、review UI、持久记忆库、retrieval、动态强化与衰减尚未实现。
+- Phase 4 的 Direction 1 研究支线已实现 provisional admission contracts、严格 synthetic benchmark loader、provenance-safe evaluator、`DEBUGGING`-only deterministic runner/CLI，以及本地 Ollama semantic-verifier adapter；这些工程改动已 commit 并推送到分支 `codex/direction1-autoresearch`，当前推送点为 `ca40b68`。
+- 当前冻结的研究用 microbenchmark 有 36 cases / 82,639 bytes，SHA-256 为 `36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321`；决策分布是 20 ADMIT / 13 REJECT / 3 REVIEW，标签来源为 27 个 agent/LLM provisional 与 9 个 conditional programmatic relations，0 个 human gold。
+- 这 9 个 programmatic 标签只证明相对于冻结 provisional base 的已注册变换关系，不是独立语义真值。C006/C020 的 support-cell 预期为 `insufficient`；C014/C034 因无法机械证明已降级为 provisional。
+- semantic pilot protocol 已在 `ca40b68` 锁定并推送；Ollama adapter 虽已实现、离线验证、commit 和 push，但尚未对这 36 cases 运行模型 benchmark。当前没有 semantic accuracy、方法优势或 confirmatory 结果。
+- Phase 4 原计划中的正式 annotation schema、人工标注 benchmark、最终 verifier/solver、REVIEW policy、模型族、指标、阈值与 human annotation plan 仍由用户决定；review UI、持久记忆库、retrieval、动态强化与衰减仍未实现。
 
-当前本地实现改动尚未 commit/push。GitHub 上不能被视为已经包含这些代码。
+当前验证状态：独立 Python 3.13 research environment 已安装测试依赖；当前完整测试为 `221 passed`。`compileall`、fake-provider pipeline 与既有 `qwen3:8b` extraction artifact 检查已通过。已推送的 deterministic runner 只能产生 `DEBUGGING` 结果，不可当作语义验证。
 
-当前验证状态：`compileall` 通过；fake provider 和 `qwen3:8b` 都能生成 valid artifact；Ollama JSON smoke test 通过，模型在 RTX 3070 Ti Laptop GPU 上以 100% GPU 运行。当前虚拟环境缺少 `pytest`，所以正式 pytest 测试套件尚未运行。
+当前研究结论边界：广义 write-time support gating 新颖性已被所查最近工作否定；仅剩的窄 joint-certificate interaction delta 尚未通过实验展示。文献搜索未发现不等于证明不存在先行工作。
 
 ## 当前文章处理链路
 
@@ -133,11 +137,11 @@ TXT/Markdown
 
 ## 研究与开发顺序
 
-1. 安装并运行测试依赖，建立正式回归测试基础。
-2. 使用 `qwen3:8b` 完成并保存一次真实 Ollama extraction artifact。
-3. 记录真实模型的格式、证据、重复、长文和评分失败模式。
-4. 定义 annotation schema，并建立小型人工标注 benchmark。
-5. 比较 LLM extraction、summary-only 和简单 heuristic baseline。
+1. 已建立独立测试环境并运行完整回归测试。
+2. 已保存并审计一份真实 `qwen3:8b` Ollama extraction artifact；它只通过结构验证，不是语义 ground truth。
+3. 当前先在锁定的 Direction 1 协议下实现并审计 atomic-versus-holistic semantic pilot runner，再运行 bounded local model pilot。
+4. 将所有 synthetic/provisional 结果与 human gold 分开报告；正式 annotation schema、human benchmark、模型、REVIEW policy、metric 和 threshold 等待用户决定。
+5. 只有在强 compositional baselines、matched coverage/compute 与 downstream 条件下观察到 interaction gain，才允许主张窄增量。
 6. 提取质量可接受后，再实现 review state、稳定 `memory_id` 和持久存储。
 7. 实现 raw chunks、summaries 和 memory units 使用同一查询集的 retrieval comparison。
 8. 有真实 recall events 后，再实验 reinforcement 和 decay。
@@ -146,8 +150,10 @@ TXT/Markdown
 ## 当前重要问题
 
 - 第一份 `qwen3:8b` artifact 通过当前 validation，但这只证明格式、段落 ID 和 core-idea quote 检查通过，不证明所有 MemoryUnit 在语义上完全受证据支持。
-- 当前虚拟环境缺少 `pytest`。
 - MemoryUnit 只引用段落 ID，尚未充分验证其完整语义是否被原文支持。
+- 36-case microbenchmark 没有人类 gold；27 个 provisional 标签与 9 个 conditional programmatic relation 标签不能支持自然分布或泛化结论。
+- 已锁定 semantic pilot protocol，但 benchmark 模型运行、matched-coverage 比较和 downstream 传播实验尚未执行。
+- 广义新颖性已被最近工作否定；窄 joint-certificate interaction delta 尚未展示。
 - 长文章目前一次性进入 Prompt，尚未处理上下文窗口限制。
 - `memory_unit_index` 只适合单次 artifact；持久化前必须引入稳定 `memory_id`。
 - 尚无 SQLite memory store、embedding index、retrieval API 或 recall event log。

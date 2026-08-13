@@ -32,7 +32,11 @@ Append-only timeline. Commands and claims are recorded with validation state; ti
 | 26 | 2026-08-14 03:53–03:57 | benchmark | Froze a 36-case public-safe design catalog: 20/13/3 ADMIT/REJECT/REVIEW, 22 agent-provisional and 14 programmatic-oracle cases. It records pairs, leakage risks and three semantic review risks; it is not yet materialized JSONL or human gold. |
 | 27 | 2026-08-14 03:57 | checkpoint | Pushed stable HEAD `eb01afb`; evaluator and benchmark materializer are parallel uncommitted TDD and are explicitly excluded from this checkpoint. |
 | 28 | 2026-08-14 03:58–04:14 | TDD and benchmark freeze | Added provenance-safe evaluator, deeply immutable admission contracts and a traceable Ollama verifier adapter. Materialized 36 cases only after fixing qualifier-loss encoding, self-contained evidence visibility and semantic-sham provenance; stable JSONL hash is `013c7f...3371`. No method had been run when these corrections were made. |
-| 29 | 2026-08-14 04:15 | protocol | Locked `DETERMINISTIC_RUN_PROTOCOL.md` before deterministic baseline results. The run is plumbing/debugging over all cases; only ten mechanically interpretable transformations are eligible for a narrow exact-outcome confirmatory description. |
+| 29 | 2026-08-14 04:15 | protocol | Locked `DETERMINISTIC_RUN_PROTOCOL.md` before deterministic baseline results. Subsequent audit removed its narrow confirmatory permission: the runner is DEBUGGING-only and no result artifact yet exists. |
+| 30 | 2026-08-14 04:19–04:40 | engineering | Made support labels orthogonal to qualifier coverage, clarified the ID-only structural proxy, completed and pushed a provenance-safe DEBUGGING-only deterministic runner, and isolated Ollama verifier attempt state across failures. No 36-case benchmark method or model result was run. |
+| 31 | 2026-08-14 04:41–05:13 | adversarial benchmark audit | RED counterexamples showed a self-consistent forged derived label could pass and that coordinated base-plus-derived mutation required an independent anchor. Added a suite-specific registry for nine paired relations, pinned canonical source/base-case digests, rejected unknown/missing/duplicate relations and duplicate minimal-evidence-set certificates, and downgraded C014/C034 because their semantic labels are not mechanically proved. |
+| 32 | 2026-08-14 05:13 | benchmark freeze | Pushed `d6fde5f`. Frozen JSONL is 82,639 bytes, SHA-256 `36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321`, 36 cases, decisions 20/13/3, provenance 27 provisional + 9 conditional relation certificates. C006/C020 use open-world `insufficient_evidence`, not `contradicted`. No benchmark result was produced by this commit. |
+| 33 | 2026-08-14 05:18 | protocol | Locked and pushed bounded semantic pilot protocol `ca40b68` before any benchmark model run. Current framework verification is 221 tests passed; model and deterministic benchmark result artifacts remain absent. |
 
 ## Command ledger
 
@@ -56,3 +60,5 @@ Append-only timeline. Commands and claims are recorded with validation state; ti
 | Focused runtime/certificate tests at `507c2e1` | TDD GREEN | 0 | 49 passed in 0.21s |
 | Full pytest after claim-form policy unification | Regression | 0 | 114 passed in 1.94s |
 | Catalog count/provenance/diff audit | Design freeze validation | 0 | 36 cases; 20/13/3; 22 provisional + 14 programmatic; diff checks passed |
+| Full pytest after registered relation certificates | Regression | 0 | 221 passed; engineering verification only |
+| Frozen benchmark hash/size/count audit at `d6fde5f` | Input integrity | 0 | SHA-256 `36390f...8321`; 82,639 bytes; 36 cases; 20/13/3; 27 provisional + 9 conditional certificates |

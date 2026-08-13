@@ -1,23 +1,23 @@
 # Direction 01 冻结 Synthetic Benchmark Case Catalog v0.1
 
-目录状态：`FROZEN_SYNTHETIC_CANDIDATE_V0.1.1`
+目录状态：`FROZEN_MATERIALIZED_SYNTHETIC_V0.1.2`
 
 冻结日期：`2026-08-14`
 
-v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错误的 programmatic-oracle provenance 降为 agent-authored provisional；case 文本、support annotation 与 expected decision 未改变。物化时另将会丢失 qualifier diagnostics 的 C013/C016/C018 编码为“core support + 精确缺 slot”，并把若干截断 evidence 扩为同一冻结段落内的自足 span；这些是可见输入/证书修复，不是看到结果后的标签调整。
+v0.1.2 预结果修订：物化文件已在 `d6fde5f` 冻结为 `data/benchmarks/direction1_synthetic_v0_1.jsonl`，SHA-256 为 `36390f9563463036d1b4d0ca7c095069080a20ee667d99d6fd0e88a859f88321`，大小 `82,639` bytes。独立审计发现，仅让 support matrix、minimal sets 与 expected decision 内部一致，不能阻止协同伪造 programmatic label。修订后仅九个预注册 pair 可使用条件关系证书，且 canonical source/base-case digests 被固定；C014 与 C034 因需要语义判断降为 agent-authored provisional。C006 与 C020 的 open-world 非支持改为 `insufficient_evidence`，不再误称为显式 contradiction；重复的 minimal-evidence-set 证书被拒绝。以上均发生在首次 benchmark 方法结果之前；当前仍无该 benchmark 的运行结果。
 
 适用协议：`PILOT_PROTOCOL.md`、`ANNOTATION_GUIDE.md`、`NOVELTY_AUDIT.md`
 
 ## 1. 边界、记号与真实性声明
 
-本目录包含 36 个公开安全、项目自著的 synthetic cases。所有机构、人员、试验、日期、数量和事件均为虚构；没有使用私人资料、真实用户文本或受版权保护的外部段落。它是 benchmark 设计目录，不是已经物化的 JSONL，也不是 human gold。
+本目录描述 36 个公开安全、项目自著且已物化的 synthetic cases。所有机构、人员、试验、日期、数量和事件均为虚构；没有使用私人资料、真实用户文本或受版权保护的外部段落。它与冻结 JSONL 对齐，但不是 human gold。
 
 - 自然撰写项由本次 AI/agent 写作产生，标为 `label_source=llm_generated`、`adjudication_status=provisional`；不能写成 `human` 或 `human_gold`。
-- 机械可判定的受控变换项在目录中给出 base、单一预注册 operator 和精确改动，标为 `label_source=programmatic_oracle`、`adjudication_status=synthetic_oracle`。这里的“oracle”只表示标签由构造规则决定，不表示真实世界真值，也不表示已经有人类复核。C030–C032 的 meaning-preserving sham 需要语义等价判断，虽保留 base/operator 元数据，仍标为 agent-authored `llm_generated/provisional`。
-- 本目录没有运行模型、没有生成客观性能结论。后续若物化为可运行 artifact，必须计算 source snapshot SHA-256、paragraph offsets 和 span offsets，并逐字验证 span。
+- 只有九个预注册 pair 标为 `label_source=programmatic_oracle`、`adjudication_status=synthetic_oracle`。每个 pair 必须匹配冻结关系 registry、canonical source digest 与 canonical base-case digest；派生标签由该关系决定。这里的“oracle”仅是**条件关系证书**：它以 agent-authored provisional base 为前提，既不把 base 变成人类真值，也不表示真实世界真值或人类复核。C014、C030–C032 与 C034 都需要语义判断，因此保留有用的 base/operator 元数据，但标为 `llm_generated/provisional`。
+- 本目录和物化文件没有 benchmark 方法结果，也没有生成客观性能结论。物化 artifact 已记录 source snapshot SHA-256、paragraph offsets 和 span offsets，并由 loader 逐字验证 span。
 - `D` 是列出的冻结 source paragraphs；`E_pool` 是提供给所有方法的相同 evidence-span pool；`E*` 是 oracle 允许的 inclusion-minimal sufficient set。若存在多个 `E*`，全部列出。
 - expected decision 同时给出 support label：`ADMIT/fully_supported`、`REJECT/{partially_supported|contradicted|insufficient_evidence}` 或 `REVIEW/ambiguous`。
-- `base_case_id=null` 仅用于自然撰写项。受控 counterfactual 的 base 必须存在于本目录；同一 base block 的全部变体必须在 source-level split 中作为一个整体移动。
+- `base_case_id=null` 用于无 paired derivation 的自然撰写项；需要语义判断的 provisional paired cases 也可保留非空 base/operator 作为审计元数据。任何 programmatic certificate 的 base 必须存在于同一冻结文件并匹配 canonical digest；同一 base block 的全部变体必须在 source-level split 中作为一个整体移动。
 
 ## 2. Operator allow-list
 
@@ -118,11 +118,11 @@ v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错�
 - **provenance**：`generator_type=programmatic`; `label_source=programmatic_oracle`; `adjudication_status=synthetic_oracle`。
 - **source paragraphs**：`P1`：“The North Workshop stores the calibrated torque wrench in cabinet 4 after each inspection.”
 - **candidate**：“After each inspection, the South Workshop stores the calibrated torque wrench in cabinet 4.”
-- **atomic / qualifier / support-parts**：`A1=South Workshop stores calibrated torque wrench`；`Qlocation=cabinet 4`；`Qtime=after each inspection`；`E1` 支持 relation/object/location/time，但实体只支持 North，不支持 South。
+- **atomic / qualifier / support-parts**：`A1=South Workshop stores calibrated torque wrench`；`Qlocation=cabinet 4`；`Qtime=after each inspection`；`E1` 支持 relation/object/location/time，但不支持 South Workshop 这一实体槽。
 - **evidence spans**：`E1=P1["The North Workshop stores the calibrated torque wrench in cabinet 4 after each inspection."]`。
-- **expected**：`REJECT / contradicted`。
+- **expected**：`REJECT / insufficient_evidence`。
 - **minimal sets**：`E*=none`；base 的 `{E1}` 不能迁移为 South Workshop 的支持。
-- **rationale**：唯一目标轴是 entity；证据明确把动作归给另一个实体。
+- **rationale**：唯一目标轴是 entity；证据只把动作归给 North Workshop，并未授权 South Workshop。开放世界下，North 的陈述不排除 South 也做同一动作，因此这是非支持而非显式矛盾。
 - **rival explanation**：单词替换极易形成表面 cue；必须与同 block 的正例和 paraphrase sham 联合评估，且 operator 元数据不得进入模型输入。
 
 ### MSG-C007 — number/date pair 的自然 base control
@@ -227,7 +227,7 @@ v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错�
 
 - **case_id**：`MSG-C014`；family：`F06 modality strengthening/weakening`；tags：`paired_counterfactual`, `modality`, `deontic`。
 - **base_case_id / operator**：`MSG-C015 / MODALITY_WEAKEN`；精确变换：`must -> may`。
-- **provenance**：`generator_type=programmatic`; `label_source=programmatic_oracle`; `adjudication_status=synthetic_oracle`。
+- **provenance**：`generator_type=llm_or_agent`; `label_source=llm_generated`; `adjudication_status=provisional`；保留 base/operator 仅作审计元数据，expected 语义标签不是机械证书。
 - **source paragraphs**：`P1`：“Before entering the clean room, visitors must wear sealed shoe covers.”
 - **candidate**：“Before entering the clean room, visitors may wear sealed shoe covers.”
 - **atomic / qualifier / support-parts**：`A1=visitors wear sealed shoe covers`；`Qcondition=before entering clean room`；`Qmodality=permission` 不保真于 source 的 obligation。
@@ -314,11 +314,11 @@ v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错�
 - **provenance**：`generator_type=programmatic`; `label_source=programmatic_oracle`; `adjudication_status=synthetic_oracle`。
 - **source paragraphs**：`P1`：“In her inspection note, engineer Mira Sol described the western seal as likely to need replacement before winter.”
 - **candidate**：“Engineer Tomas Reed wrote that the western seal would likely need replacement before winter.”
-- **atomic / qualifier / support-parts**：content、time 与 modality 匹配；`Qattribution=Tomas Reed` 与 source 的 `Mira Sol` 冲突。
+- **atomic / qualifier / support-parts**：content、time 与 modality 匹配；source 只支持 `Qattribution=Mira Sol`，不支持 `Qattribution=Tomas Reed`。
 - **evidence spans**：`E1=P1["engineer Mira Sol described the western seal as likely to need replacement before winter"]`。
-- **expected**：`REJECT / contradicted`。
+- **expected**：`REJECT / insufficient_evidence`。
 - **minimal sets**：`E*=none`。
-- **rationale**：source 确认了同一内容，但没有授权把它归给另一个人；正是 pooled support 会漏掉的 ownership error。
+- **rationale**：source 确认了同一内容，但没有授权把它归给另一个人；开放世界下，Mira 的陈述不排除 Tomas 也曾写过，因此这是 attribution 非支持而非显式矛盾。它仍是 pooled support 容易漏掉的 ownership error。
 - **rival explanation**：entity mismatch 和 attribution mismatch 在本例重合；后续应以同一人多种角色的自然案例区分真正 source ownership 能力。
 
 ### MSG-C021 — topic-related non-supporting evidence
@@ -507,7 +507,7 @@ v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错�
 
 - **case_id**：`MSG-C034`；family：`F14 over-composed claim with unsupported atom`；tags：`cross_span=yes`, `attribution`, `condition`, `over_composed`。
 - **base_case_id / operator**：`MSG-C035 / OVERCOMPOSE_UNSUPPORTED_ATOM`；精确变换：在 base candidate 后添加独立 atom `the automated controller initiated the response`。
-- **provenance**：`generator_type=programmatic`; `label_source=programmatic_oracle`; `adjudication_status=synthetic_oracle`。
+- **provenance**：`generator_type=llm_or_agent`; `label_source=llm_generated`; `adjudication_status=provisional`；保留 base/operator 仅作审计元数据，新增 atom 的“无支持”仍依赖语义判断。
 - **source paragraphs**：`P1`：“The safety guide says an alert should be sent if tank pressure exceeds 8 bar.”；`P2`：“Operator Jo Lin recorded a pressure of 8.6 bar at 11:05 and wrote that an alert was sent.”
 - **candidate**：“Operator Jo Lin recorded that at 11:05 the tank pressure exceeded the 8-bar alert threshold and that an alert was sent; additionally, the automated controller initiated the response.”
 - **atomic / qualifier / support-parts**：`A1=threshold is >8 bar` from `E1`；`A2=Jo recorded 8.6 at 11:05 and wrote alert sent` from `E2`；`A3=automated controller initiated the response` 无支持。
@@ -564,7 +564,7 @@ v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错�
 | F11 contradictory spans | C024, C025 | unresolved conflict + explicit correction |
 | F12 genuinely ambiguous | C026, C027 | attribution/coreference + threshold/identity |
 | F13 non-self-sufficient fragment | C028 | claim-side failure |
-| F14 over-composed unsupported atom | C029, C034, C035 | natural negative + programmatic/base pair |
+| F14 over-composed unsupported atom | C029, C034, C035 | natural negative + provisional paired case/base |
 
 ### 4.2 Qualifier 与设计属性
 
@@ -581,8 +581,8 @@ v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错�
 | cross-span | C003, C004, C025, C029, C033–C036（8 个） |
 | redundant evidence | C022, C023, C025, C036（至少 4 个；C025 的旧 notice 对 final claim 冗余） |
 | contradiction/ambiguity | C024, C026, C027（3 个 REVIEW）；C025 是 resolved-conflict control |
-| agent-authored/provisional | 25 个：22 个 `NATURAL_AUTHORED` + C030–C032 semantic shams |
-| programmatic synthetic oracles | 11 个机械可判定的显式 operator 项 |
+| agent-authored/provisional | 27 个：22 个 `NATURAL_AUTHORED` + C014、C030–C032、C034；后五项保留 paired 元数据但需要语义判断 |
+| conditional programmatic relation certificates | 9 个：C006、C008、C009、C011、C013、C016、C018、C020、C022 |
 
 ### 4.3 Expected decision 分布
 
@@ -644,20 +644,21 @@ v0.1.1 预结果修订：首次方法/模型运行前，将 C030–C032 从错�
 
 ### 6.3 标签循环与 programmatic oracle 限制
 
-- programmatic operator 决定合成 expected label，因此这些项只能验证实现能否恢复预注册规则，不能证明人类同意、自然分布有效或真实下游价值。
+- programmatic 标签只允许来自九个预注册 paired relations。loader 同时固定 canonical source/base-case digests，并验证派生 candidate、support transition 与 decision；未知、缺失或重复 relation 均 fail closed。
+- 关系证书仍条件于 agent-authored provisional base 的语义标注。它能证明 fixture 遵守预注册变化，不能证明 base 正确、人类同意、自然分布有效或真实下游价值。
 - label 不得由待评 verifier、candidate generator 或最终 grader 生成；`fake_oracle` 只能做 plumbing upper bound。
 - 不得让文件名、case family、operator、evidence ordering 或 span count 与 label 一一对应。REJECT 既有 1-span 也有 2-span，ADMIT 也覆盖相同结构；运行时 evidence order 应在不改变 ID/offset 的条件下 seeded shuffle。
 - 对 C024/C026/C027 的 REVIEW，任何二值化都必须单独披露；不得把 abstention 计为准确拒绝。
 - 本目录的 `provisional` natural labels 需要至少两名独立人类标注者和 adjudication 后，才可升级为 `human_gold`；programmatic items 即使人审通过，也应保留构造 provenance。
 
-## 7. 物化前冻结检查单
+## 7. 物化冻结检查单
 
 1. 为每个 block 生成独立 `document_id`，共享 source 的 pair 复用同一 immutable snapshot。
 2. 规范化换行后计算 SHA-256；记录 paragraph `snapshot_start/snapshot_end` 和 evidence paragraph-local offsets。
 3. 自动验证所有 quoted span 精确出现且 offset 唯一；重复段落 C022 必须通过 paragraph ID 消歧。
-4. 验证每个 programmatic item 的 base 存在、operator 在 allow-list、精确 diff 只触及目标轴。
-5. 对每个 `E*` 做 deletion audit；对 C022/C023/C036 枚举全部已知 minimal sets。
-6. 独立语言/语义审查第 6.2 节的三个风险项；保留初始判断与 adjudication，不静默覆盖。
+4. 验证每个 programmatic item 的 base 存在且匹配 canonical digest、operator 在 relation registry、精确 diff 只触及目标轴；拒绝未注册、缺失与重复 relation。
+5. 对每个 `E*` 做 deletion audit；对 C022/C023/C036 枚举全部已知 minimal sets，并拒绝同一 evidence set 的重复编码。
+6. 独立语言/语义审查第 6.2 节的风险项；C014 与 C034 已因不能机械证明而降为 provisional，保留初始判断且不静默覆盖。
 7. 冻结 block split、run-order seed、candidate/evidence pool 和 downstream question templates 后再运行任何方法。
 8. 运行并报告 token/length/name/number/modal surface baselines，确认主结论不是 operator leakage。
 9. 分别报告 natural/provisional 与 programmatic-oracle 结果；两者都不能替代真实人标、多域 benchmark。

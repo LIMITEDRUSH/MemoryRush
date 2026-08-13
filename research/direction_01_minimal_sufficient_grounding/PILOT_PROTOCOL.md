@@ -1,8 +1,10 @@
 # Pilot Protocol v0.1
 
-Protocol status: `LOCKED_BEFORE_RUN`  
-Decision status: `PROVISIONAL_AGENT_DESIGN`  
-Planned analysis class: confirmatory only for the frozen synthetic-oracle suite; artifact diagnosis and any post-run changes are exploratory/debugging.
+Protocol status: `HISTORICAL_DESIGN_LOCK`; run authorization superseded by `SEMANTIC_PILOT_PROTOCOL.md`
+Decision status: `PROVISIONAL_AGENT_DESIGN`
+Planned analysis class: `DEBUGGING` for deterministic plumbing and at most `EXPLORATORY` for the bounded model pilot. `CONFIRMATORY` is forbidden under the active v0.1 protocols.
+
+Amendment after pre-result adversarial audit: the materialized benchmark now contains 27 agent/LLM provisional labels and 9 conditional programmatic relation certificates. Those certificates remain conditional on provisional base interpretations and are not human gold. The authoritative frozen hash, run gates, methods, failure policy, and kill rules are in `SEMANTIC_PILOT_PROTOCOL.md`; this file retains the broader historical design rationale only.
 
 ## 1. Claim Under Test
 
@@ -165,4 +167,3 @@ Kill the current method claim under tested conditions if a detail-matched holist
 ## 14. Known Limits
 
 This pilot cannot establish human annotation reliability, broad-domain generalization, statistical superiority, final schema validity, or publishable novelty. It is designed to obtain early falsification evidence and prove the research plumbing.
-
