@@ -24,6 +24,13 @@
 - duplicate minimal-evidence-set 编码现在 fail closed；C022 的两个不同 singleton sets 合法，但重复同一 set（包括换序）非法。
 - ID-only、exact-copy 与 static-oracle adapters 已实现。后者只作 plumbing upper bound；前两者均不是 strong semantic verifier。
 
+### Deterministic pipeline result (DEBUGGING only)
+
+- The first isolated run failed closed because Git checkout converted the frozen LF benchmark to CRLF. This retained `INVALID_RUN` exposed a previously unpinned byte-level dependency; `.gitattributes` and a regression test now make fresh checkout bytes stable.
+- In the corrected clean-worktree run, the structural ID-only proxy admitted all 36 cases and incurred 16 false admissions relative to the frozen labels. Exact-copy admitted 9 cases with 2 false admissions but missed 13 provisional ADMIT cases. This is the expected coverage-risk tension, not proof that either method is preferable.
+- Static-oracle reproduced 20 ADMIT / 3 REVIEW / 13 REJECT exactly because it reads the frozen certificate. It is a pipeline upper bound, not an independent semantic verifier.
+- These results are conditional on 27 agent/LLM-authored provisional labels and nine relation certificates; zero labels are human gold. No Qwen request or joint method evaluation has occurred, so H1 remains untested.
+
 ## Patterns and Insights
 
 - 当前方向的可证伪优势来自“写入前阻止 unsupported semantic strengthening”，而不是更强检索或更大模型。
