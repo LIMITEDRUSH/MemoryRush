@@ -120,7 +120,32 @@ def test_semantic_verifier_sends_one_reproducible_structured_request() -> None:
     assert verifier.last_run.eval_count == 30
     assert verifier.last_run.raw_response == json.dumps(_valid_response())
     assert len(verifier.last_run.request_sha256) == 64
-    assert verifier.last_run.validation_status == "VALID"
+    assert verifier.last_run.validation_status == "SCHEMA_VALID"
+
+
+def test_failed_second_attempt_cannot_reuse_prior_schema_valid_run() -> None:
+    class SuccessThenFailureTransport:
+        def __init__(self) -> None:
+            self.call_count = 0
+
+        def __call__(self, endpoint: str, payload: dict, timeout_seconds: int) -> dict:
+            self.call_count += 1
+            if self.call_count == 1:
+                return _envelope(_valid_response())
+            raise RuntimeError("synthetic transport failure")
+
+    verifier = OllamaSemanticVerifier(
+        OllamaVerifierConfig(model_name="qwen3:8b"),
+        transport=SuccessThenFailureTransport(),
+    )
+    verifier.build_support_matrix(_candidate(), (_span(),))
+    assert verifier.last_run is not None
+    assert verifier.last_run.validation_status == "SCHEMA_VALID"
+
+    with pytest.raises(RuntimeError, match="synthetic transport failure"):
+        verifier.build_support_matrix(_candidate(), (_span(),))
+
+    assert verifier.last_run is None
 
 
 def test_semantic_verifier_rejects_missing_or_duplicate_cells() -> None:

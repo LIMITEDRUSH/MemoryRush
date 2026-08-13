@@ -135,6 +135,9 @@ class OllamaSemanticVerifier:
         candidate: CandidateClaim,
         evidence_spans: tuple[EvidenceSpan, ...],
     ) -> SupportMatrix:
+        # A run record belongs to exactly one attempt.  Clear any earlier success
+        # before validation or transport so a failed call cannot inherit it.
+        self.last_run = None
         if not isinstance(candidate, CandidateClaim):
             raise TypeError("candidate must be a CandidateClaim")
         if type(evidence_spans) is not tuple or any(
@@ -218,7 +221,7 @@ class OllamaSemanticVerifier:
         self.last_run = OllamaVerifierRun(
             **{
                 **self.last_run.__dict__,
-                "validation_status": "VALID",
+                "validation_status": "SCHEMA_VALID",
             }
         )
         return matrix
