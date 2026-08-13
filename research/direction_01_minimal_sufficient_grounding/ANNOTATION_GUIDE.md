@@ -12,6 +12,8 @@ Each case contains a frozen document, one candidate proposition, provisional ato
 
 Every paragraph records ordered, non-overlapping `snapshot_start` / `snapshot_end` offsets into the frozen document. Evidence offsets remain paragraph-local. This two-level coordinate system prevents repeated paragraph text from being silently mapped to the wrong occurrence.
 
+Synthetic oracle records must include a total `support_cells` matrix: exactly one label for every declared atomic-claim × evidence-span pair, with value-specific supported qualifier slots and any declared compositional support parts. They also include a separate `claim_form` audit for self-sufficiency and proposition minimality. A final `ADMIT` label alone is not enough to reconstruct or audit the mechanism.
+
 ## Support Labels
 
 - `fully_supported`: every atomic requirement and declared qualifier is directly or compositionally supported.

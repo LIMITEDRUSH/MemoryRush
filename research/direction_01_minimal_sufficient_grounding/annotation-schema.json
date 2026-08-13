@@ -93,11 +93,50 @@
     "oracle": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["decision", "reason_codes", "minimal_evidence_sets", "label_source", "adjudication_status"],
+      "required": ["decision", "reason_codes", "minimal_evidence_sets", "claim_form", "support_cells", "label_source", "adjudication_status"],
       "properties": {
         "decision": {"enum": ["ADMIT", "REVIEW", "REJECT"]},
         "reason_codes": {"type": "array", "items": {"type": "string", "minLength": 1}},
         "minimal_evidence_sets": {"type": "array", "items": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}},
+        "claim_form": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["self_sufficiency", "minimality", "reason_codes", "auditor_name", "auditor_version"],
+          "properties": {
+            "self_sufficiency": {"enum": ["PASS", "REVIEW", "FAIL"]},
+            "minimality": {"enum": ["PASS", "REVIEW", "FAIL"]},
+            "reason_codes": {"type": "array", "items": {"type": "string", "minLength": 1}},
+            "auditor_name": {"type": "string", "minLength": 1},
+            "auditor_version": {"type": "string", "minLength": 1}
+          }
+        },
+        "support_cells": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claim_id", "span_id", "label", "rationale", "supported_qualifiers", "supported_claim_parts"],
+            "properties": {
+              "claim_id": {"type": "string", "minLength": 1},
+              "span_id": {"type": "string", "minLength": 1},
+              "label": {"enum": ["supports", "partial", "contradicts", "ambiguous", "insufficient"]},
+              "rationale": {"type": "string"},
+              "supported_qualifiers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["kind", "value"],
+                  "properties": {
+                    "kind": {"enum": ["entity", "relation", "object", "time", "scope", "condition", "quantifier", "modality", "negation", "attribution"]},
+                    "value": {"type": "string", "minLength": 1}
+                  }
+                }
+              },
+              "supported_claim_parts": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+            }
+          }
+        },
         "label_source": {"enum": ["programmatic_oracle", "human", "llm_generated"]},
         "adjudication_status": {"enum": ["synthetic_oracle", "provisional", "human_gold"]}
       },

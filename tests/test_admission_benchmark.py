@@ -4,6 +4,7 @@ from hashlib import sha256
 import pytest
 
 from memoryrush.admission.benchmark import load_benchmark, parse_benchmark_case
+from memoryrush.admission import ClaimFormStatus, SupportLabel
 
 
 def _payload() -> dict:
@@ -58,6 +59,28 @@ def _payload() -> dict:
             "decision": "ADMIT",
             "reason_codes": ["fully_supported"],
             "minimal_evidence_sets": [["span-001"]],
+            "claim_form": {
+                "self_sufficiency": "PASS",
+                "minimality": "PASS",
+                "reason_codes": ["synthetic_control"],
+                "auditor_name": "programmatic_fixture",
+                "auditor_version": "v0.1",
+            },
+            "support_cells": [
+                {
+                    "claim_id": "claim-001",
+                    "span_id": "span-001",
+                    "label": "supports",
+                    "rationale": "The span is the supported control.",
+                    "supported_qualifiers": [
+                        {"kind": "quantifier", "value": "120"},
+                        {"kind": "modality", "value": "may"},
+                        {"kind": "time", "value": "2025"},
+                        {"kind": "condition", "value": "under stable funding"},
+                    ],
+                    "supported_claim_parts": [],
+                }
+            ],
             "label_source": "programmatic_oracle",
             "adjudication_status": "synthetic_oracle",
         },
@@ -79,6 +102,8 @@ def test_parse_valid_case_resolves_candidate_and_span() -> None:
     assert case.evidence_spans[0].text.startswith("The 120-person")
     assert case.document.paragraphs[0].snapshot_start == 0
     assert case.oracle.minimal_evidence_sets == (("span-001",),)
+    assert case.oracle.claim_form.self_sufficiency is ClaimFormStatus.PASS
+    assert case.oracle.support_cells[0].label is SupportLabel.SUPPORTS
 
 
 def test_source_hash_and_evidence_offsets_are_verified() -> None:
@@ -142,6 +167,8 @@ def test_label_source_and_adjudication_combinations_are_truthful(
         ("candidate", "atomic_claims", 0, "qualifiers", 0),
         ("evidence_spans", 0),
         ("oracle",),
+        ("oracle", "claim_form"),
+        ("oracle", "support_cells", 0),
         ("provenance",),
     ],
 )
@@ -222,3 +249,19 @@ def test_load_benchmark_rejects_unknown_counterfactual_base_case(tmp_path) -> No
 
     with pytest.raises(ValueError, match="unknown base_case_id"):
         load_benchmark(path)
+
+
+def test_oracle_support_cells_must_form_a_total_matrix() -> None:
+    payload = _payload()
+    payload["oracle"]["support_cells"] = []
+
+    with pytest.raises(ValueError, match="missing support cells"):
+        parse_benchmark_case(payload)
+
+
+def test_oracle_supported_qualifier_must_match_declared_slot_value() -> None:
+    payload = _payload()
+    payload["oracle"]["support_cells"][0]["supported_qualifiers"][0]["value"] = "999"
+
+    with pytest.raises(ValueError, match="undeclared qualifier"):
+        parse_benchmark_case(payload)

@@ -16,9 +16,14 @@ from memoryrush.admission.models import (
     AdmissionDecision,
     AtomicClaim,
     CandidateClaim,
+    ClaimFormAudit,
+    ClaimFormStatus,
     EvidenceSpan,
     QualifierKind,
     QualifierSlot,
+    SupportCell,
+    SupportLabel,
+    SupportMatrix,
 )
 
 
@@ -100,6 +105,8 @@ class OracleAnnotation:
     decision: AdmissionDecision
     reason_codes: tuple[str, ...]
     minimal_evidence_sets: tuple[tuple[str, ...], ...]
+    claim_form: ClaimFormAudit
+    support_cells: tuple[SupportCell, ...]
     label_source: str
     adjudication_status: str
 
@@ -155,7 +162,9 @@ def parse_benchmark_case(payload: dict[str, Any]) -> BenchmarkCase:
         _require_list(root.get("evidence_spans"), "evidence_spans"),
         document,
     )
-    oracle = _parse_oracle(_require_mapping(root.get("oracle"), "oracle"), evidence_spans)
+    oracle = _parse_oracle(
+        _require_mapping(root.get("oracle"), "oracle"), candidate, evidence_spans
+    )
     provenance = _parse_provenance(
         _require_mapping(root.get("provenance"), "provenance"), oracle
     )
@@ -362,7 +371,9 @@ def _parse_evidence_spans(
 
 
 def _parse_oracle(
-    payload: dict[str, Any], evidence_spans: tuple[EvidenceSpan, ...]
+    payload: dict[str, Any],
+    candidate: CandidateClaim,
+    evidence_spans: tuple[EvidenceSpan, ...],
 ) -> OracleAnnotation:
     _reject_unknown_fields(
         payload,
@@ -370,6 +381,8 @@ def _parse_oracle(
             "decision",
             "reason_codes",
             "minimal_evidence_sets",
+            "claim_form",
+            "support_cells",
             "label_source",
             "adjudication_status",
         },
@@ -416,13 +429,143 @@ def _parse_oracle(
         minimal_sets.append(span_ids)
     if decision is AdmissionDecision.ADMIT and not minimal_sets:
         raise ValueError("ADMIT oracle requires at least one minimal evidence set")
+
+    claim_form = _parse_claim_form(
+        _require_mapping(payload.get("claim_form"), "oracle.claim_form")
+    )
+    support_cells = _parse_support_cells(
+        _require_list(payload.get("support_cells"), "oracle.support_cells")
+    )
+    # Reuse the runtime contract so the frozen oracle cannot omit or invent a
+    # claim/span cell, qualifier slot, or compositional support part.
+    SupportMatrix(
+        candidate=candidate,
+        evidence_spans=evidence_spans,
+        cells=support_cells,
+    )
     return OracleAnnotation(
         decision=decision,
         reason_codes=reason_codes,
         minimal_evidence_sets=tuple(minimal_sets),
+        claim_form=claim_form,
+        support_cells=support_cells,
         label_source=label_source,
         adjudication_status=adjudication_status,
     )
+
+
+def _parse_claim_form(payload: dict[str, Any]) -> ClaimFormAudit:
+    _reject_unknown_fields(
+        payload,
+        {
+            "self_sufficiency",
+            "minimality",
+            "reason_codes",
+            "auditor_name",
+            "auditor_version",
+        },
+        "oracle.claim_form",
+    )
+    try:
+        self_sufficiency = ClaimFormStatus(
+            _require_text(
+                payload.get("self_sufficiency"),
+                "oracle.claim_form.self_sufficiency",
+            )
+        )
+        minimality = ClaimFormStatus(
+            _require_text(payload.get("minimality"), "oracle.claim_form.minimality")
+        )
+    except ValueError as exc:
+        raise ValueError("unsupported claim-form status") from exc
+    return ClaimFormAudit(
+        self_sufficiency=self_sufficiency,
+        minimality=minimality,
+        reason_codes=tuple(
+            _require_text(reason, "oracle.claim_form reason code")
+            for reason in _require_list(
+                payload.get("reason_codes"), "oracle.claim_form.reason_codes"
+            )
+        ),
+        auditor_name=_require_text(
+            payload.get("auditor_name"), "oracle.claim_form.auditor_name"
+        ),
+        auditor_version=_require_text(
+            payload.get("auditor_version"), "oracle.claim_form.auditor_version"
+        ),
+    )
+
+
+def _parse_support_cells(payload: list[Any]) -> tuple[SupportCell, ...]:
+    cells: list[SupportCell] = []
+    for cell_index, raw_cell in enumerate(payload):
+        cell = _require_mapping(raw_cell, f"oracle.support_cells[{cell_index}]")
+        _reject_unknown_fields(
+            cell,
+            {
+                "claim_id",
+                "span_id",
+                "label",
+                "rationale",
+                "supported_qualifiers",
+                "supported_claim_parts",
+            },
+            f"oracle.support_cells[{cell_index}]",
+        )
+        try:
+            label = SupportLabel(
+                _require_text(cell.get("label"), "oracle support label")
+            )
+        except ValueError as exc:
+            raise ValueError(f"unsupported oracle support label: {cell.get('label')}") from exc
+        rationale = cell.get("rationale", "")
+        if not isinstance(rationale, str):
+            raise ValueError("oracle support rationale must be a string")
+        qualifiers: list[QualifierSlot] = []
+        for slot_index, raw_slot in enumerate(
+            _require_list(
+                cell.get("supported_qualifiers", []),
+                "oracle supported_qualifiers",
+            )
+        ):
+            slot = _require_mapping(
+                raw_slot,
+                f"oracle.support_cells[{cell_index}].supported_qualifiers[{slot_index}]",
+            )
+            _reject_unknown_fields(slot, {"kind", "value"}, "oracle supported qualifier")
+            try:
+                kind = QualifierKind(
+                    _require_text(slot.get("kind"), "oracle supported qualifier kind")
+                )
+            except ValueError as exc:
+                raise ValueError(
+                    f"unsupported qualifier kind: {slot.get('kind')}"
+                ) from exc
+            qualifiers.append(
+                QualifierSlot(
+                    kind=kind,
+                    value=_require_text(
+                        slot.get("value"), "oracle supported qualifier value"
+                    ),
+                )
+            )
+        cells.append(
+            SupportCell(
+                claim_id=_require_text(cell.get("claim_id"), "oracle cell claim_id"),
+                span_id=_require_text(cell.get("span_id"), "oracle cell span_id"),
+                label=label,
+                rationale=rationale,
+                supported_qualifiers=tuple(qualifiers),
+                supported_claim_parts=tuple(
+                    _require_text(part, "oracle supported claim part")
+                    for part in _require_list(
+                        cell.get("supported_claim_parts", []),
+                        "oracle supported_claim_parts",
+                    )
+                ),
+            )
+        )
+    return tuple(cells)
 
 
 def _parse_provenance(
