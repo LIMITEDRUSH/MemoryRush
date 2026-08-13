@@ -2,7 +2,7 @@
 
 Judge only whether each frozen evidence span supports each declared atomic claim relative to the source text. Do not judge real-world truth, importance, novelty, salience, or whether the fact should be remembered.
 
-For every declared claim × span pair, return exactly one cell:
+For every declared claim x span pair, return exactly one cell:
 
 - `supports`: this span supports the atomic claim core. Qualifier coverage is a separate axis; a `supports` cell may still omit unsupported declared qualifiers.
 - `partial`: it supports only explicitly declared `required_support_parts`; list each covered part.

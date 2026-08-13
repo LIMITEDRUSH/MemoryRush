@@ -329,6 +329,20 @@ def test_prompt_version_is_loaded_from_a_versioned_file() -> None:
     assert len(verifier.last_run.prompt_sha256) == 64
 
 
+def test_versioned_semantic_prompt_contains_no_corrupted_non_ascii_glyphs() -> None:
+    prompt_path = (
+        Path(__file__).resolve().parents[1]
+        / "memoryrush"
+        / "admission"
+        / "prompts"
+        / "semantic_support_v0_1.md"
+    )
+    prompt = prompt_path.read_text(encoding="utf-8")
+
+    assert prompt.isascii()
+    assert "claim x span pair" in prompt
+
+
 @pytest.mark.parametrize("case_id", ["MSG-C008", "MSG-C013", "MSG-C016", "MSG-C018"])
 def test_parser_can_represent_frozen_core_label_and_qualifier_gold(case_id: str) -> None:
     cases = load_benchmark(
