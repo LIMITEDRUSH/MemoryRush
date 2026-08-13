@@ -126,6 +126,17 @@ def test_oracle_minimal_sets_must_reference_known_spans() -> None:
         parse_benchmark_case(payload)
 
 
+def test_oracle_rejects_duplicate_minimal_evidence_sets() -> None:
+    payload = _payload()
+    payload["oracle"]["minimal_evidence_sets"] = [
+        ["span-001"],
+        ["span-001"],
+    ]
+
+    with pytest.raises(ValueError, match="duplicate minimal evidence set"):
+        parse_benchmark_case(payload)
+
+
 def test_llm_generated_label_cannot_claim_human_adjudication() -> None:
     payload = _payload()
     payload["oracle"]["label_source"] = "llm_generated"
@@ -206,6 +217,14 @@ def test_load_benchmark_rejects_duplicate_case_ids(tmp_path) -> None:
     path.write_text(f"{serialized}\n{serialized}\n", encoding="utf-8")
 
     with pytest.raises(ValueError, match="duplicate case_id"):
+        load_benchmark(path)
+
+
+def test_unregistered_suite_cannot_claim_programmatic_oracle(tmp_path) -> None:
+    path = tmp_path / "unregistered-programmatic-suite.jsonl"
+    path.write_text(json.dumps(_payload()) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="no registered relation certificate suite"):
         load_benchmark(path)
 
 

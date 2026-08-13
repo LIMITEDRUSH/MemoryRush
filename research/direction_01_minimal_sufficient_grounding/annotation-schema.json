@@ -97,7 +97,7 @@
       "properties": {
         "decision": {"enum": ["ADMIT", "REVIEW", "REJECT"]},
         "reason_codes": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "minimal_evidence_sets": {"type": "array", "items": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}},
+        "minimal_evidence_sets": {"type": "array", "uniqueItems": true, "items": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}},
         "claim_form": {
           "type": "object",
           "additionalProperties": false,

@@ -2,8 +2,11 @@ import json
 import subprocess
 import sys
 from collections import Counter
+from copy import deepcopy
 from hashlib import sha256
 from pathlib import Path
+
+import pytest
 
 from memoryrush.admission.benchmark import load_benchmark
 from memoryrush.admission.models import QualifierKind, QualifierSlot, SupportMatrix
@@ -35,12 +38,12 @@ def test_direction1_builder_materializes_frozen_catalog(tmp_path: Path) -> None:
         "REVIEW": 3,
     }
     assert Counter(case.oracle.label_source for case in cases) == {
-        "llm_generated": 25,
-        "programmatic_oracle": 11,
+        "llm_generated": 27,
+        "programmatic_oracle": 9,
     }
     assert Counter(case.provenance.generator_type for case in cases) == {
-        "llm_or_agent": 25,
-        "programmatic": 11,
+        "llm_or_agent": 27,
+        "programmatic": 9,
     }
     assert {case.case_family.split()[0] for case in cases} == {
         f"F{index:02d}" for index in range(1, 15)
@@ -90,6 +93,205 @@ def test_direction1_builder_materializes_frozen_catalog(tmp_path: Path) -> None:
         and by_id[case_id].provenance.perturbation_operator is not None
         for case_id in semantic_shams
     )
+    unsupported_atom = by_id["MSG-C034"]
+    assert unsupported_atom.oracle.label_source == "llm_generated"
+    assert unsupported_atom.oracle.adjudication_status == "provisional"
+    assert unsupported_atom.provenance.generator_type == "llm_or_agent"
+    assert (
+        "unsupported_atom_non_support_not_mechanically_provable"
+        in unsupported_atom.oracle.reason_codes
+    )
+    deontic = by_id["MSG-C014"]
+    assert deontic.oracle.label_source == "llm_generated"
+    assert deontic.oracle.adjudication_status == "provisional"
+    assert deontic.provenance.generator_type == "llm_or_agent"
+    assert "deontic_label_not_mechanically_provable" in deontic.oracle.reason_codes
+    assert by_id["MSG-C006"].oracle.support_cells[0].label.value == "insufficient"
+    assert by_id["MSG-C020"].oracle.support_cells[0].label.value == "insufficient"
+
+
+def _write_payloads(path: Path, payloads: list[dict]) -> None:
+    path.write_text(
+        "\n".join(
+            json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            for payload in payloads
+        )
+        + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def _built_payloads(tmp_path: Path) -> list[dict]:
+    from scripts.build_direction1_synthetic_benchmark import build_benchmark
+
+    output = tmp_path / "direction1.jsonl"
+    build_benchmark(output)
+    return [json.loads(line) for line in output.read_text(encoding="utf-8").splitlines()]
+
+
+def test_programmatic_relation_rejects_self_consistent_wrong_c006_admit(
+    tmp_path: Path,
+) -> None:
+    payloads = _built_payloads(tmp_path)
+    case = next(payload for payload in payloads if payload["case_id"] == "MSG-C006")
+    case["oracle"]["decision"] = "ADMIT"
+    case["oracle"]["minimal_evidence_sets"] = [["E1"]]
+    cell = case["oracle"]["support_cells"][0]
+    cell["label"] = "supports"
+    cell["supported_qualifiers"] = deepcopy(
+        case["candidate"]["atomic_claims"][0]["qualifiers"]
+    )
+    forged = tmp_path / "forged-c006-admit.jsonl"
+    _write_payloads(forged, payloads)
+
+    with pytest.raises(ValueError, match="programmatic relation.*expected decision REJECT"):
+        load_benchmark(forged)
+
+
+def test_frozen_suite_requires_every_registered_programmatic_relation(
+    tmp_path: Path,
+) -> None:
+    payloads = _built_payloads(tmp_path)
+    case = next(payload for payload in payloads if payload["case_id"] == "MSG-C006")
+    case["oracle"]["label_source"] = "llm_generated"
+    case["oracle"]["adjudication_status"] = "provisional"
+    case["provenance"]["generator_type"] = "llm_or_agent"
+    forged = tmp_path / "missing-registered-relation.jsonl"
+    _write_payloads(forged, payloads)
+
+    with pytest.raises(ValueError, match="programmatic relation registry.*missing"):
+        load_benchmark(forged)
+
+
+def test_frozen_suite_rejects_unpaired_programmatic_provenance(tmp_path: Path) -> None:
+    payloads = _built_payloads(tmp_path)
+    base = next(payload for payload in payloads if payload["case_id"] == "MSG-C005")
+    base["oracle"]["label_source"] = "programmatic_oracle"
+    base["oracle"]["adjudication_status"] = "synthetic_oracle"
+    base["provenance"]["generator_type"] = "programmatic"
+    forged = tmp_path / "unpaired-programmatic-base.jsonl"
+    _write_payloads(forged, payloads)
+
+    with pytest.raises(ValueError, match="programmatic relation registry.*unregistered"):
+        load_benchmark(forged)
+
+
+def test_frozen_suite_rejects_extra_unregistered_programmatic_case(
+    tmp_path: Path,
+) -> None:
+    payloads = _built_payloads(tmp_path)
+    extra = deepcopy(payloads[0])
+    extra["case_id"] = "MSG-C999"
+    extra["candidate"]["candidate_id"] = "MSG-C999-candidate"
+    extra["oracle"]["label_source"] = "programmatic_oracle"
+    extra["oracle"]["adjudication_status"] = "synthetic_oracle"
+    extra["provenance"]["generator_type"] = "programmatic"
+    payloads.append(extra)
+    forged = tmp_path / "extra-programmatic-case.jsonl"
+    _write_payloads(forged, payloads)
+
+    with pytest.raises(ValueError, match="programmatic relation registry.*unregistered"):
+        load_benchmark(forged)
+
+
+def test_annotation_schema_rejects_duplicate_minimal_evidence_sets() -> None:
+    schema_path = (
+        Path(__file__).parents[1]
+        / "research"
+        / "direction_01_minimal_sufficient_grounding"
+        / "annotation-schema.json"
+    )
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    minimal_sets = schema["properties"]["oracle"]["properties"][
+        "minimal_evidence_sets"
+    ]
+
+    assert minimal_sets["uniqueItems"] is True
+
+
+def test_programmatic_relation_rejects_unregistered_candidate_change(
+    tmp_path: Path,
+) -> None:
+    payloads = _built_payloads(tmp_path)
+    case = next(payload for payload in payloads if payload["case_id"] == "MSG-C006")
+    case["candidate"]["proposition"] = case["candidate"]["proposition"].replace(
+        "South Workshop", "East Workshop"
+    )
+    claim = case["candidate"]["atomic_claims"][0]
+    claim["text"] = claim["text"].replace("South Workshop", "East Workshop")
+    claim["qualifiers"][0]["value"] = "East Workshop"
+    forged = tmp_path / "forged-c006-transition.jsonl"
+    _write_payloads(forged, payloads)
+
+    with pytest.raises(ValueError, match="programmatic relation.*candidate transition"):
+        load_benchmark(forged)
+
+
+def test_programmatic_relation_rejects_changed_frozen_source(
+    tmp_path: Path,
+) -> None:
+    payloads = _built_payloads(tmp_path)
+    case = next(payload for payload in payloads if payload["case_id"] == "MSG-C006")
+    old = "North Workshop"
+    new = "East Workshop"
+    document = case["document"]
+    document["snapshot_text"] = document["snapshot_text"].replace(old, new)
+    document["paragraphs"][0]["text"] = document["paragraphs"][0]["text"].replace(
+        old, new
+    )
+    document["paragraphs"][0]["snapshot_end"] = len(document["snapshot_text"])
+    document["source_sha256"] = sha256(
+        document["snapshot_text"].encode("utf-8")
+    ).hexdigest()
+    span = case["evidence_spans"][0]
+    span["text"] = span["text"].replace(old, new)
+    span["end_char"] = len(span["text"])
+    forged = tmp_path / "forged-c006-source.jsonl"
+    _write_payloads(forged, payloads)
+
+    with pytest.raises(ValueError, match="programmatic relation.*frozen source"):
+        load_benchmark(forged)
+
+
+def test_programmatic_relation_rejects_joint_base_and_derived_source_change(
+    tmp_path: Path,
+) -> None:
+    payloads = _built_payloads(tmp_path)
+    for case_id in ("MSG-C005", "MSG-C006"):
+        case = next(payload for payload in payloads if payload["case_id"] == case_id)
+        document = case["document"]
+        old = document["snapshot_text"]
+        new = old.replace("The North Workshop", "The North and South Workshops")
+        document["snapshot_text"] = new
+        document["paragraphs"][0]["text"] = new
+        document["paragraphs"][0]["snapshot_end"] = len(new)
+        document["source_sha256"] = sha256(new.encode("utf-8")).hexdigest()
+        span = case["evidence_spans"][0]
+        span["text"] = new
+        span["end_char"] = len(new)
+    forged = tmp_path / "joint-source-mutation.jsonl"
+    _write_payloads(forged, payloads)
+
+    with pytest.raises(ValueError, match="canonical source digest"):
+        load_benchmark(forged)
+
+
+def test_duplicate_evidence_positive_is_derived_from_base_certificate(
+    tmp_path: Path,
+) -> None:
+    payloads = _built_payloads(tmp_path)
+    case = next(payload for payload in payloads if payload["case_id"] == "MSG-C022")
+    case["oracle"]["decision"] = "REJECT"
+    case["oracle"]["minimal_evidence_sets"] = []
+    for cell in case["oracle"]["support_cells"]:
+        cell["label"] = "insufficient"
+        cell["supported_qualifiers"] = []
+    forged = tmp_path / "forged-c022-reject.jsonl"
+    _write_payloads(forged, payloads)
+
+    with pytest.raises(ValueError, match="programmatic relation.*expected decision ADMIT"):
+        load_benchmark(forged)
 
 
 def test_direction1_certificates_and_pair_provenance_are_recomputed(tmp_path: Path) -> None:

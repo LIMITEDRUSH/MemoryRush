@@ -7,7 +7,7 @@ span offset, oracle reference, or provenance label fails before evaluation.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
@@ -55,6 +55,90 @@ ALLOWED_LABEL_STATUS_PAIRS = {
     ("llm_generated", "provisional"),
     ("human", "provisional"),
     ("human", "human_gold"),
+}
+
+
+@dataclass(frozen=True)
+class _FrozenQualifierRelation:
+    """Suite-specific certificate for one pre-registered synthetic edit.
+
+    This is deliberately not a general semantic entailment rule.  It verifies
+    that the checked-in paired fixture still has the exact typed, single-axis
+    transition registered before evaluation.
+    """
+
+    base_case_id: str
+    operator: str
+    qualifier_kind: QualifierKind
+    old_value: str
+    new_value: str
+    proposition_old: str
+    proposition_new: str
+    claim_old: str | None
+    claim_new: str | None
+    expected_cell_label: SupportLabel
+
+
+_FROZEN_QUALIFIER_RELATIONS = {
+    "MSG-C006": _FrozenQualifierRelation(
+        "MSG-C005", "replace_entity", QualifierKind.ENTITY,
+        "North Workshop", "South Workshop", "North Workshop", "South Workshop",
+        "North Workshop", "South Workshop", SupportLabel.INSUFFICIENT,
+    ),
+    "MSG-C008": _FrozenQualifierRelation(
+        "MSG-C007", "replace_quantifier", QualifierKind.QUANTIFIER,
+        "48 participants", "84 participants", "Forty-eight", "Eighty-four",
+        None, None, SupportLabel.CONTRADICTS,
+    ),
+    "MSG-C009": _FrozenQualifierRelation(
+        "MSG-C007", "replace_time", QualifierKind.TIME,
+        "12 March 2026", "21 March 2026", "12 March 2026", "21 March 2026",
+        None, None, SupportLabel.CONTRADICTS,
+    ),
+    "MSG-C011": _FrozenQualifierRelation(
+        "MSG-C010", "flip_negation", QualifierKind.NEGATION,
+        "not operate", "affirmed operation", "did not operate", "operated",
+        "did not operate", "operated", SupportLabel.CONTRADICTS,
+    ),
+    "MSG-C013": _FrozenQualifierRelation(
+        "MSG-C012", "replace_modality", QualifierKind.MODALITY,
+        "may", "asserted actual", "may reduce", "reduces",
+        "may reduce", "reduces", SupportLabel.SUPPORTS,
+    ),
+    "MSG-C016": _FrozenQualifierRelation(
+        "MSG-C012", "delete_condition", QualifierKind.CONDITION,
+        "during peak load", "unrestricted operating conditions",
+        "During peak load, t", "T", None, None, SupportLabel.SUPPORTS,
+    ),
+    "MSG-C018": _FrozenQualifierRelation(
+        "MSG-C017", "delete_scope", QualifierKind.SCOPE,
+        "night-shift staff only", "all staff", "only night-shift staff", "staff",
+        None, None, SupportLabel.SUPPORTS,
+    ),
+    "MSG-C020": _FrozenQualifierRelation(
+        "MSG-C019", "replace_attribution", QualifierKind.ATTRIBUTION,
+        "Mira Sol's inspection note", "Tomas Reed", "Mira Sol", "Tomas Reed",
+        None, None, SupportLabel.INSUFFICIENT,
+    ),
+}
+_FROZEN_DUPLICATE_RELATION = {"MSG-C022": "MSG-C001"}
+_FROZEN_BASE_SOURCE_SHA256 = {
+    "MSG-C001": "71201198320cae60b26945c2dca1ff1386bebf3872e7c97b42845a4a7e31da32",
+    "MSG-C005": "df69d71608dc07487e9d117b8f259284fe853750a04d7c0881a96930a325b4b5",
+    "MSG-C007": "7acb0ac528d1e19c37c7c36606bcac1fbbffc519202ac0f9892ed84c6bd3e88e",
+    "MSG-C010": "6478f4d1c20150c62c60ab51f5dcb670b2d8d7b4f43a672badf54c362608923b",
+    "MSG-C012": "29fe3f5de5723aaaf1a9198742adb01b0be420b5e73b07b38db2a669d1066ad2",
+    "MSG-C017": "ebe4f00a7b68ad4ebe84ccc7bed5bea14f0b6d5d6847690ac722b98d74c32b7c",
+    "MSG-C019": "81b46cdb9b562b763431bd4b50a71eee168467d9b5a26c9124ffec1764ff1011",
+}
+_FROZEN_BASE_CASE_SHA256 = {
+    "MSG-C001": "9e7eb6dd4f6250051de57a37f2d55350e15b4077aa313551057fa674ab18b47a",
+    "MSG-C005": "f1c90b6ce1bfeaae09021406b7c1cd47cd41630888ff84f7fe4f68abd8eaabd5",
+    "MSG-C007": "f1beedb5531f8fa09cdd8afbadcf56db33885551891dbb480d04dc398b51d1f0",
+    "MSG-C010": "1256c1e4334c7ce92d8701a45e9858571e64f3e167f5828139abf37bec4635f3",
+    "MSG-C012": "9933ef60ebe34feeb6ae1f18ad4e3b818605a8c1cc77a26081f0eca6005c3584",
+    "MSG-C017": "8e3eb9c1ad3d8d8036f9ba12db055684edaaa153794ccd1d4bd24997fda08718",
+    "MSG-C019": "1a4c645a649e7574caf9a972ed925900d09c3b547aae1dbe6edf0cacc94a3f7a",
 }
 
 
@@ -219,6 +303,7 @@ def load_benchmark(path: str | Path) -> tuple[BenchmarkCase, ...]:
                 f"case {case.case_id} references unknown base_case_id: {base_case_id}"
             )
     _validate_base_case_graph(cases)
+    _validate_frozen_programmatic_relations(cases)
     return tuple(cases)
 
 
@@ -232,6 +317,244 @@ def _validate_base_case_graph(cases: list[BenchmarkCase]) -> None:
                 raise ValueError(f"cyclic base_case_id provenance involving {current}")
             seen.add(current)
             current = parents[current]
+
+
+def _validate_frozen_programmatic_relations(cases: list[BenchmarkCase]) -> None:
+    """Validate only the pre-registered relations in this frozen suite.
+
+    Programmatic provenance is earned by an exact paired transformation, not
+    by attaching an allow-listed operator name to a self-consistent oracle.
+    The registered transitions below are fixture certificates, not reusable
+    natural-language inference rules.
+    """
+
+    # Do not turn the generic v0.1 loader into a closed registry for every
+    # future benchmark.  These certificates are activated only for the named
+    # MSG-C frozen suite; other suites need their own committed relation layer.
+    programmatic_cases = [
+        case for case in cases if case.oracle.label_source == "programmatic_oracle"
+    ]
+    suite_cases = [case for case in cases if case.case_id.startswith("MSG-C")]
+    if not suite_cases:
+        if programmatic_cases:
+            raise ValueError(
+                "programmatic_oracle has no registered relation certificate suite"
+            )
+        return
+    if len(suite_cases) != len(cases):
+        raise ValueError("frozen MSG-C suite cannot be mixed with another case namespace")
+    by_id = {case.case_id: case for case in cases}
+    programmatic = {case.case_id: case for case in programmatic_cases}
+    registered = set(_FROZEN_QUALIFIER_RELATIONS) | set(_FROZEN_DUPLICATE_RELATION)
+    unknown = set(programmatic) - registered
+    missing = registered - set(programmatic)
+    if unknown or missing:
+        raise ValueError(
+            "programmatic relation registry mismatch: "
+            f"unregistered={sorted(unknown)}, missing={sorted(missing)}"
+        )
+    for case_id, case in programmatic.items():
+        if case_id in _FROZEN_QUALIFIER_RELATIONS:
+            _validate_frozen_qualifier_relation(
+                case, by_id, _FROZEN_QUALIFIER_RELATIONS[case_id]
+            )
+        else:
+            _validate_frozen_duplicate_relation(
+                case, by_id, _FROZEN_DUPLICATE_RELATION[case_id]
+            )
+
+
+def _validate_programmatic_base(
+    case: BenchmarkCase,
+    by_id: dict[str, BenchmarkCase],
+    expected_base_id: str,
+    expected_operator: str,
+) -> BenchmarkCase:
+    prefix = f"programmatic relation {case.case_id}"
+    if (
+        case.provenance.base_case_id != expected_base_id
+        or case.provenance.perturbation_operator != expected_operator
+    ):
+        raise ValueError(f"{prefix} has an unregistered base/operator pair")
+    base = by_id[expected_base_id]
+    if base.provenance.base_case_id is not None:
+        raise ValueError(f"{prefix} base must not itself be derived")
+    if base.oracle.decision is not AdmissionDecision.ADMIT:
+        raise ValueError(f"{prefix} base must have an ADMIT certificate")
+    if base.document.source_sha256 != _FROZEN_BASE_SOURCE_SHA256[expected_base_id]:
+        raise ValueError(f"{prefix} base does not match canonical source digest")
+    if _canonical_case_digest(base) != _FROZEN_BASE_CASE_SHA256[expected_base_id]:
+        raise ValueError(f"{prefix} base does not match canonical case digest")
+    if case.document != base.document or case.evidence_spans != base.evidence_spans:
+        raise ValueError(f"{prefix} changed frozen source or evidence")
+    return base
+
+
+def _replace_once(value: str, old: str, new: str) -> str | None:
+    if value.count(old) != 1:
+        return None
+    return value.replace(old, new, 1)
+
+
+def _canonical_case_digest(case: BenchmarkCase) -> str:
+    payload = json.dumps(
+        asdict(case),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return sha256(payload).hexdigest()
+
+
+def _validate_frozen_qualifier_relation(
+    case: BenchmarkCase,
+    by_id: dict[str, BenchmarkCase],
+    relation: _FrozenQualifierRelation,
+) -> None:
+    prefix = f"programmatic relation {case.case_id}"
+    base = _validate_programmatic_base(
+        case, by_id, relation.base_case_id, relation.operator
+    )
+    if len(base.candidate.atomic_claims) != 1 or len(case.candidate.atomic_claims) != 1:
+        raise ValueError(f"{prefix} candidate transition must contain one atomic claim")
+    base_claim = base.candidate.atomic_claims[0]
+    case_claim = case.candidate.atomic_claims[0]
+    expected_proposition = _replace_once(
+        base.candidate.proposition, relation.proposition_old, relation.proposition_new
+    )
+    expected_claim_text = base_claim.text
+    if relation.claim_old is not None and relation.claim_new is not None:
+        expected_claim_text = _replace_once(
+            base_claim.text, relation.claim_old, relation.claim_new
+        )
+    expected_qualifiers = tuple(
+        QualifierSlot(slot.kind, relation.new_value)
+        if slot.kind is relation.qualifier_kind and slot.value == relation.old_value
+        else slot
+        for slot in base_claim.qualifiers
+    )
+    changed_slots = sum(
+        slot.kind is relation.qualifier_kind and slot.value == relation.old_value
+        for slot in base_claim.qualifiers
+    )
+    if (
+        expected_proposition is None
+        or expected_claim_text is None
+        or changed_slots != 1
+        or case.candidate.candidate_id != f"{case.case_id}-candidate"
+        or case.candidate.proposition != expected_proposition
+        or case_claim.claim_id != base_claim.claim_id
+        or case_claim.text != expected_claim_text
+        or case_claim.qualifiers != expected_qualifiers
+        or case_claim.required_support_parts != base_claim.required_support_parts
+    ):
+        raise ValueError(f"{prefix} candidate transition does not match registration")
+    if case.oracle.decision is not AdmissionDecision.REJECT:
+        raise ValueError(f"{prefix} expected decision REJECT")
+    if case.oracle.minimal_evidence_sets:
+        raise ValueError(f"{prefix} expected no sufficient evidence set")
+    expected_cells = tuple(
+        SupportCell(
+            claim_id=cell.claim_id,
+            span_id=cell.span_id,
+            label=relation.expected_cell_label,
+            rationale=current.rationale,
+            supported_qualifiers=tuple(
+                slot
+                for slot in cell.supported_qualifiers
+                if not (
+                    slot.kind is relation.qualifier_kind
+                    and slot.value == relation.old_value
+                )
+            ),
+            supported_claim_parts=cell.supported_claim_parts,
+        )
+        for cell, current in zip(base.oracle.support_cells, case.oracle.support_cells)
+    )
+    if len(case.oracle.support_cells) != len(base.oracle.support_cells):
+        raise ValueError(f"{prefix} support-cell shape changed")
+    if case.oracle.support_cells != expected_cells:
+        raise ValueError(f"{prefix} support cells do not match registered transition")
+
+
+def _validate_frozen_duplicate_relation(
+    case: BenchmarkCase,
+    by_id: dict[str, BenchmarkCase],
+    base_case_id: str,
+) -> None:
+    prefix = f"programmatic relation {case.case_id}"
+    # Duplicate evidence changes the evidence tuple by definition, so validate
+    # source identity here and derive the added span/cell from the base.
+    if (
+        case.provenance.base_case_id != base_case_id
+        or case.provenance.perturbation_operator != "duplicate_evidence"
+    ):
+        raise ValueError(f"{prefix} has an unregistered base/operator pair")
+    base = by_id[base_case_id]
+    if (
+        base.provenance.base_case_id is not None
+        or base.oracle.decision is not AdmissionDecision.ADMIT
+        or base.document.source_sha256 != _FROZEN_BASE_SOURCE_SHA256[base_case_id]
+        or _canonical_case_digest(base) != _FROZEN_BASE_CASE_SHA256[base_case_id]
+        or case.document != base.document
+    ):
+        raise ValueError(f"{prefix} has an invalid base or frozen source")
+    if (
+        case.candidate.candidate_id != f"{case.case_id}-candidate"
+        or case.candidate.proposition != base.candidate.proposition
+        or case.candidate.atomic_claims != base.candidate.atomic_claims
+    ):
+        raise ValueError(f"{prefix} candidate transition must preserve the candidate")
+    if len(base.evidence_spans) != 1 or len(case.evidence_spans) != 2:
+        raise ValueError(f"{prefix} must add exactly one evidence span")
+    if case.oracle.decision is not AdmissionDecision.ADMIT:
+        raise ValueError(f"{prefix} expected decision ADMIT")
+    original, duplicate = case.evidence_spans
+    base_span = base.evidence_spans[0]
+    if original != base_span or duplicate.span_id == original.span_id or (
+        duplicate.document_id,
+        duplicate.paragraph_id,
+        duplicate.text,
+        duplicate.start_char,
+        duplicate.end_char,
+        duplicate.source_sha256,
+    ) != (
+        base_span.document_id,
+        base_span.paragraph_id,
+        base_span.text,
+        base_span.start_char,
+        base_span.end_char,
+        base_span.source_sha256,
+    ):
+        raise ValueError(f"{prefix} evidence is not an exact duplicate")
+    expected_cells: list[SupportCell] = []
+    for base_cell in base.oracle.support_cells:
+        for span_id in (original.span_id, duplicate.span_id):
+            current = next(
+                (
+                    cell
+                    for cell in case.oracle.support_cells
+                    if cell.claim_id == base_cell.claim_id and cell.span_id == span_id
+                ),
+                None,
+            )
+            if current is None:
+                raise ValueError(f"{prefix} support-cell clone is missing")
+            expected_cells.append(
+                SupportCell(
+                    claim_id=base_cell.claim_id,
+                    span_id=span_id,
+                    label=base_cell.label,
+                    rationale=current.rationale,
+                    supported_qualifiers=base_cell.supported_qualifiers,
+                    supported_claim_parts=base_cell.supported_claim_parts,
+                )
+            )
+    if set(case.oracle.support_cells) != set(expected_cells):
+        raise ValueError(f"{prefix} support cells are not cloned from the base")
+    expected_sets = {(original.span_id,), (duplicate.span_id,)}
+    if set(case.oracle.minimal_evidence_sets) != expected_sets:
+        raise ValueError(f"{prefix} minimal evidence sets are not base-derived")
 
 
 def _parse_document(payload: dict[str, Any]) -> BenchmarkDocument:
@@ -451,6 +774,8 @@ def _parse_oracle(
         if unknown:
             raise ValueError(f"oracle references unknown evidence span: {', '.join(sorted(unknown))}")
         minimal_sets.append(span_ids)
+    if len(minimal_sets) != len(set(minimal_sets)):
+        raise ValueError("oracle contains a duplicate minimal evidence set")
     if decision is AdmissionDecision.ADMIT and not minimal_sets:
         raise ValueError("ADMIT oracle requires at least one minimal evidence set")
 

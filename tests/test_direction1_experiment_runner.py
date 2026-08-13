@@ -109,15 +109,15 @@ def _case_payload(case_id: str, *, supported: bool) -> dict[str, object]:
                     "supported_claim_parts": [],
                 }
             ],
-            "label_source": "programmatic_oracle",
-            "adjudication_status": "synthetic_oracle",
+            "label_source": "llm_generated",
+            "adjudication_status": "provisional",
         },
         "provenance": {
             "construction": "project_authored_synthetic",
             "base_case_id": None,
             "perturbation_operator": None,
             "generator": "test_fixture",
-            "generator_type": "programmatic",
+            "generator_type": "llm_or_agent",
         },
     }
 
@@ -285,7 +285,7 @@ def test_runner_joins_oracle_internally_and_records_provenance(tmp_path: Path) -
     assert artifact.benchmark_byte_size == path.stat().st_size
     assert artifact.benchmark_schema_version == "direction1.synthetic_oracle.v0.1"
     assert artifact.case_count == 2
-    assert artifact.provenance_counts["generator_type"] == {"programmatic": 2}
+    assert artifact.provenance_counts["generator_type"] == {"llm_or_agent": 2}
     assert len(artifact.oracle_mapping_sha256) == 64
     assert artifact.matched_admission is None
     assert artifact.validation_status is ArtifactValidationStatus.VALIDATED
@@ -297,8 +297,8 @@ def test_runner_joins_oracle_internally_and_records_provenance(tmp_path: Path) -
         "generator_type",
     )
     expected_stratum = (
-        "label_source=programmatic_oracle|"
-        "adjudication_status=synthetic_oracle|generator_type=programmatic"
+        "label_source=llm_generated|"
+        "adjudication_status=provisional|generator_type=llm_or_agent"
     )
     assert artifact.provenance_strata_counts == {expected_stratum: 2}
 

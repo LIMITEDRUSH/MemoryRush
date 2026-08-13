@@ -73,6 +73,10 @@ HIGH_RISK_NOT_HUMAN_GOLD = {"MSG-C014", "MSG-C023", "MSG-C026"}
 # These positive shams preserve semantics only by an agent-authored judgment;
 # they retain paired operator metadata but are not mechanical-label oracles.
 AGENT_AUTHORED_SEMANTIC_SHAMS = {"MSG-C030", "MSG-C031", "MSG-C032"}
+# These cases contain a registered surface edit, but their expected semantic
+# label is not mechanically entailed by that edit alone.  Preserve the pair
+# metadata while keeping the annotation agent-authored and provisional.
+NON_MECHANICAL_SEMANTIC_CASES = {"MSG-C014", "MSG-C034"}
 
 
 @dataclass(frozen=True)
@@ -239,7 +243,7 @@ CASES: tuple[CaseSpec, ...] = (
         "MSG-C006", "F03 entity replacement", "B-ENTITY-01",
         "After each inspection, the South Workshop stores the calibrated torque wrench in cabinet 4.",
         (ClaimSpec("South Workshop stores the calibrated torque wrench", q(("entity", "South Workshop"), ("object", "cabinet 4"), ("time", "after each inspection"))),),
-        (EvidenceSpec(0),), (("contradicts",),), "REJECT", "contradicted",
+        (EvidenceSpec(0),), (("insufficient",),), "REJECT", "insufficient_evidence",
         "MSG-C005", "ENTITY_REPLACE", qualifier_support=(((1, 2),),),
     ),
     CaseSpec(
@@ -336,7 +340,7 @@ CASES: tuple[CaseSpec, ...] = (
         "Engineer Tomas Reed wrote that the western seal would likely need replacement before winter.",
         (ClaimSpec("The western seal likely needs replacement", q(("time", "before winter"), ("modality", "likely"), ("attribution", "Tomas Reed"))),),
         (EvidenceSpec(0),),
-        (("contradicts",),), "REJECT", "contradicted", "MSG-C019", "ATTRIBUTION_TRANSFER",
+        (("insufficient",),), "REJECT", "insufficient_evidence", "MSG-C019", "ATTRIBUTION_TRANSFER",
         qualifier_support=(((0, 1),),),
     ),
     CaseSpec(
@@ -627,6 +631,7 @@ def _compile_case(spec: CaseSpec) -> dict:
     is_programmatic = (
         spec.catalog_operator is not None
         and spec.case_id not in AGENT_AUTHORED_SEMANTIC_SHAMS
+        and spec.case_id not in NON_MECHANICAL_SEMANTIC_CASES
     )
     payload = {
         "schema_version": SUPPORTED_SCHEMA_VERSION,
@@ -663,6 +668,15 @@ def _compile_case(spec: CaseSpec) -> dict:
                 *(
                     ["agent_authored_semantic_sham_not_programmatic_oracle"]
                     if spec.case_id in AGENT_AUTHORED_SEMANTIC_SHAMS
+                    else []
+                ),
+                *(
+                    [
+                        "deontic_label_not_mechanically_provable"
+                        if spec.case_id == "MSG-C014"
+                        else "unsupported_atom_non_support_not_mechanically_provable"
+                    ]
+                    if spec.case_id in NON_MECHANICAL_SEMANTIC_CASES
                     else []
                 ),
                 *(
