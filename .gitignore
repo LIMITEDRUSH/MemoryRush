@@ -3,11 +3,14 @@
 !.env.example
 
 .venv/
+.venv-reading/
 venv/
 
 *.db
 *.sqlite
 *.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
 
 chroma_db/
 qdrant_storage/
@@ -17,6 +20,7 @@ memory_logs/
 outputs/
 data/processed/
 data/index/
+data/artifacts/
 
 __pycache__/
 *.py[cod]
@@ -26,3 +30,28 @@ __pycache__/
 
 .DS_Store
 Thumbs.db
+
+# Local credentials, models, verification traces and synchronization conflicts.
+.streamlit/secrets.toml
+*.pem
+*.key
+*.gguf
+*.safetensors
+verification/
+*-Limitedrush*.py
+*-Limitedrush*.md
+*-Limitedrush*.toml
+*-Limitedrush*.txt
+*-Limitedrush*.gitignore
+
+# Private research workspace and agent session records are not product releases.
+workstreams/
+research/
+memory.md
+experience.md
+AGENTS.md
+MODEL_ALLOCATION.md
+RESEARCH_BRIEF.md
+RESEARCH_WORKFLOW_CN.md
+EXECUTION_DISCIPLINE_CN.md
+PITFALLS.md
