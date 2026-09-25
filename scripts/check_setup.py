@@ -1,4 +1,4 @@
-"""Basic setup check for Phase 0."""
+"""Basic setup check for the local reading assistant."""
 
 from __future__ import annotations
 
@@ -18,6 +18,8 @@ def main() -> int:
         Path("requirements.txt"),
         Path(".env.example"),
         Path("memoryrush"),
+        Path("memoryrush/pipeline.py"),
+        Path("memoryrush/validation.py"),
         Path("app"),
         Path("data/sample_docs"),
         Path("tests"),
